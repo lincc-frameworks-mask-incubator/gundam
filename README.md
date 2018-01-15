@@ -1,7 +1,7 @@
 # Gundam 
 
 A package to count pairs at lightspeed and estimate 2-point correlation functions 
-of large galaxy samples.
+of large galaxy samples or mock catalogs.
 
 ## Getting Started
 
