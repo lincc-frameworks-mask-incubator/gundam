@@ -22,7 +22,8 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return MagicMock()
 
-MOCK_MODULES = ['numpy', 'matplotlib', 'munch', 'astropy', 'logging', 'cflibfor']
+MOCK_MODULES = ['numpy', 'matplotlib', 'munch', 'astropy', 'logging', 
+                'astropy.table', 'matplotlib.pyplot', 'cflibfor']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
