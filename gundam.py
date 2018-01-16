@@ -3566,57 +3566,7 @@ def rppi_C(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
 # =============================================================================
 def pcf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     """
-    Given two astropy tables corresponding to **data** and **random** samples,
-    calculate the **two-point projected auto-correlation function (pcf)**
-    
-    All input parameters that control binning, cosmology, estimator, etc.
-    are passed in a single dictionary ``par``, which can be easily generated
-    with default values using :func:`gundam.packpars` and customized later
-
-    .. rubric :: Parameters
-        
-    tab : astropy table
-        Table with data particles (D)
-    
-    tab1 : astropy table 
-        Table with random particles (R)
-    
-    par : Munch dictionary 
-        Input parameters. See :ref:`indic-pcf` for a detailed description
-
-    nthreads : integer. Default=-1
-        Number of threads to use. Default to -1, which means all available cpu cores
-
-    write : bool. Default=True
-       * True : write several output files for DD/RR/DR counts, correlations, etc.
-       * False : do not write any output files (except for logs, which are always saved)
-
-    plot : bool. Default=False
-       * True : generate the CF plot on screen (and saved to disk when ``write=True``)
-       * False : do not generate any plots
-      
-    kwargs : dict
-        Extra keywords passed to :func:`gundam.plotcf`
-
-       
-    .. rubric :: Returns
-        
-    counts : Munch dictionary
-        Munch dictionary, containing all counts and correlations accesible by 
-        field keys, e.g. counts.dd, counts.rr, counts.wrp, etc. It also stores 
-        the complete log and all input parameters. See :ref:`outdicpcf` for a 
-        detailed description.
-        
-        
-    .. rubric :: Examples
-
-    .. code-block:: python
-    
-        import gundam as gun ; from astropy.table import Table
-        gals  = Table.read('redgal.fits')                       # read data
-        rans  = Table.read('redgal_rand.fits')                  # read randoms
-        par = gun.packpars(kind='pcf',outfn='redgal')           # generate default parameters
-        cnt = gun.pcf(gals, rans, par, write=True, plot=True)   # get pcf and plot
+    Simple docstring
     """
     lj = 27  # nr of characters for left justification of some status msgs
     
