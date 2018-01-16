@@ -20,7 +20,6 @@ import os
 #MOCK_MODULES = ['cflibfor','gundam']
 #for mod_name in MOCK_MODULES:
     #sys.modules[mod_name] = mock.Mock()
-import sys
 from unittest.mock import MagicMock
 
 class Mock(MagicMock):
@@ -28,7 +27,7 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return MagicMock()
 
-MOCK_MODULES = ['numpy', 'munch', 'cflibfor']
+MOCK_MODULES = ['numpy', 'matplotlib', 'munch', 'asttropy', 'logging', 'cflibfor']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
