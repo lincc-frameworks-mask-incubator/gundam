@@ -39,9 +39,10 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
-    'sphinx.ext.todo'
+    'sphinx.ext.todo',
+    'numpydoc'
 ]
-#    'numpydoc',
+
 
 
 # Add any paths that contain templates here, relative to this directory.
