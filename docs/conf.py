@@ -16,10 +16,20 @@
 import sys
 import os
 
-import mock
-MOCK_MODULES = ['cflibfor','gundam']
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
+#import mock
+#MOCK_MODULES = ['cflibfor','gundam']
+#for mod_name in MOCK_MODULES:
+    #sys.modules[mod_name] = mock.Mock()
+import sys
+from unittest.mock import MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return MagicMock()
+
+MOCK_MODULES = ['numpy', 'gundam', 'cflibfor']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -39,10 +49,9 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
-    'sphinx.ext.todo',
-    'numpydoc'
+    'sphinx.ext.todo'
 ]
-
+#    'numpydoc'
 
 
 # Add any paths that contain templates here, relative to this directory.
