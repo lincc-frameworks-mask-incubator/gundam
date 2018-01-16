@@ -16,21 +16,14 @@
 import sys
 import os
 
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-if on_rtd:
-    try:
-        from unittest.mock import MagicMock
-    except ImportError:
-        from mock import Mock as MagicMock
+from unittest.mock import MagicMock
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return MagicMock()
 
-    class Mock(MagicMock):
-
-        @classmethod
-        def __getattr__(cls, name):
-            return Mock()
-
-    MOCK_MODULES = ['numpy', 'matplotlib', 'munch', 'astropy', 'logging', 'cflibfor']
-    sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+MOCK_MODULES = ['numpy', 'matplotlib', 'munch', 'astropy', 'logging', 'cflibfor']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -132,6 +125,7 @@ todo_include_todos = True
 
 # -- Options for HTML output ----------------------------------------------
 # Check hether we are on readthedocs.org or local
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 if not on_rtd:  # only import and set the theme if we're building docs locally
     import sphinx_rtd_theme
     html_theme = 'sphinx_rtd_theme'
