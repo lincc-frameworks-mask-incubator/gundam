@@ -5,7 +5,6 @@
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
-SOURCEDIR     = .
 BUILDDIR      = _build
 
 # User-friendly check for sphinx-build
@@ -54,8 +53,12 @@ help:
 clean:
 	rm -rf $(BUILDDIR)/*
 
+.PHONY: generate-api
+generate-api: apidoc.sh
+	bash $<
+
 .PHONY: html
-html:
+html: generate-api
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
