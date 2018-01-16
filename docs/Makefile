@@ -53,10 +53,6 @@ help:
 clean:
 	rm -rf $(BUILDDIR)/*
 
-.PHONY: generate-api
-generate-api: apidoc.sh
-	bash $<
-
 .PHONY: html
 html: 
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
