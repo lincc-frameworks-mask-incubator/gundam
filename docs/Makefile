@@ -58,7 +58,7 @@ generate-api: apidoc.sh
 	bash $<
 
 .PHONY: html
-html: generate-api
+html: 
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
