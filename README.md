@@ -6,10 +6,10 @@ redshift-space coordinates and derives boostrap error estimates. Supports
 custom weigths and works in parallel across your CPU cores.
 
 ## Getting Started
-Input data consists of astropy tables (see `Data Tables <http://docs.astropy.org/en/stable/table/>`_), 
+Input data consists of astropy tables (see [Astropy Tables](http://docs.astropy.org/en/stable/table/)), 
 which provides an excellent I/O framework for a variety of formats (ASCII, VOTable, FITS tables, etc.)
 
-Gundam also employs special dictionaries (see `Munch <https://pypi.python.org/pypi/munch>`_) 
+Gundam also employs special dictionaries (see [Munch](https://pypi.python.org/pypi/munch))
 to pack multiple parameters or output fields at once. Such dictionaries have
 atribute-like access with dot notation. If you are used to ipython's dot+tab 
 completion you will love this.

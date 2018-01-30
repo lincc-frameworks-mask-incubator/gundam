@@ -7,10 +7,9 @@ Introduction
 1. Input Data
 =============
 
-Input data for the main routines are astropy tables (see 
-[Astropy Tables](http://docs.astropy.org/en/stable/table/)), which provide 
-all the functionality to manipulate tabular data, and to read/write in a variety 
-of formats (ASCII, VOTable, FITS tables, etc.)
+Input data for the main routines are astropy tables (see `Data Tables <http://docs.astropy.org/en/stable/table/>`_), 
+which provide  all the functionality to manipulate tabular data, and to read/write 
+in a variety of formats (ASCII, VOTable, FITS tables, etc.)
 
 These input tables should have columns for **at least** angular coordinates and 
 weights, but note the default names of columns can be overriden so there is no need
@@ -44,7 +43,7 @@ For example, data in FITS format can be read simply by
 ==========================
 
 Since there are quite a few parameters to deal, Gundam employs a special 
-dictionary (see [Munch](https://pypi.python.org/pypi/munch)) to pack and pass 
+dictionary (see `Munch <https://pypi.python.org/pypi/munch>`_) to pack and pass 
 all of them at once. This dictionary also has atribute-like access with dot 
 notation, meaning to access parameters you just type :code:`par.omegam` (print matter density), 
 :code:`par.h0=100.` (set Hubble constant), etc. If you are used to ipython+tab
