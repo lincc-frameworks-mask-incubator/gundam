@@ -13,8 +13,21 @@ cflibfor-f2pywrappers2.f90
 # Benchs
 bench/
 
-# Own pickled files
+# Files output by Gundam by default
 .pik
+.cnt
+.log
+.par
+.rppi
+.dd
+.rr
+.dr
+.wrp
+.xis
+.wth
+.cd
+.cr
+.pdf
 
 # Distribution / packaging
 .Python

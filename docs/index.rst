@@ -17,6 +17,7 @@ Contents:
    introduction
    in
    out
+   pxorder
    performance
    api
 

@@ -27,6 +27,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | mxh2        | Nr. of RA cells of the SK table. Only relevant if                 |
 |             | ``autogrid=False``. Default=180                                   |
 +-------------+-------------------------------------------------------------------+
+| pxorder     | Data ordering method. See :ref:`pxorder` for details and          |
+|             | options. Default='natural'                                        |
++-------------+-------------------------------------------------------------------+
 | doboot      | If ``True``, calculate bootstrap counts and error bars.           |
 |             | Default=False                                                     |
 +-------------+-------------------------------------------------------------------+
@@ -67,6 +70,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | cra1,cdec1, | Column names in **random** sample table (tab1).                   |
 | cwei1       | Default=('ra', 'dec', 'wei')                                      |
 +-------------+-------------------------------------------------------------------+
+| custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
+|             | limit. See :ref:`custRAbound`. Default=None                       |
++-------------+-------------------------------------------------------------------+
 | outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
 +-------------+-------------------------------------------------------------------+
 
@@ -95,6 +101,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 +-------------+-------------------------------------------------------------------+
 | mxh2        | Nr. of RA cells of the SK table. Only relevant if                 |
 |             | ``autogrid=False``. Default=180                                   |
++-------------+-------------------------------------------------------------------+
+| pxorder     | Data ordering method. See :ref:`pxorder` for details and          |
+|             | options. Default='natural'                                        |
 +-------------+-------------------------------------------------------------------+
 | doboot      | If ``True``, calculate bootstrap counts and error bars.           |
 |             | Default=False                                                     |
@@ -138,6 +147,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | cra2,cdec2, | Column names in **cross** sample table (tab2).                    |
 | cwei2       | Default=('ra', 'dec', 'wei')                                      |
 +-------------+-------------------------------------------------------------------+
+| custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
+|             | limit. See :ref:`custRAbound`. Default=None                       |
++-------------+-------------------------------------------------------------------+
 | outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
 +-------------+-------------------------------------------------------------------+
 
@@ -167,6 +179,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | mxh2        | Nr. of RA cells of the SK table. Only relevant if                 |
 |             | ``autogrid=False``. Default=180                                   |
 +-------------+-------------------------------------------------------------------+
+| pxorder     | Data ordering method. See :ref:`pxorder` for details and          |
+|             | options. Default='natural'                                        |
++-------------+-------------------------------------------------------------------+
 | doboot      | If ``True``, calculate bootstrap counts and error bars.           |
 |             | Default=False                                                     |
 +-------------+-------------------------------------------------------------------+
@@ -194,6 +209,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 +-------------+-------------------------------------------------------------------+
 | cra,cdec,   | Column names in **data** sample table (tab).                      |
 | cred,cwei   | Default=('ra', 'dec', 'wei')                                      |
++-------------+-------------------------------------------------------------------+
+| custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
+|             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
 | outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
 +-------------+-------------------------------------------------------------------+
@@ -254,11 +272,17 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 +-------------+-------------------------------------------------------------------+
 | description | Short description of the run. Only informative. Default=''        |
 +-------------+-------------------------------------------------------------------+
+| pxorder     | Sorting method for data. See :ref:`pxorder` for options.          |
+|             | Default='natural'                                                 |
++-------------+-------------------------------------------------------------------+
 | cra,cdec,   | Column names in **data** sample table (tab).                      |
 | cwei        | Default=('ra', 'dec', 'wei')                                      |
 +-------------+-------------------------------------------------------------------+
 | cra1,cdec1, | Column names in **random** sample table (tab1).                   |
 | cwei1       | Default=('ra', 'dec', 'wei')                                      |
++-------------+-------------------------------------------------------------------+
+| custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
+|             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
 | outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
 +-------------+-------------------------------------------------------------------+

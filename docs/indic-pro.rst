@@ -36,7 +36,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | mxh3        | Nr. of DCOM cells of the SK table. Only relevant if               |
 |             | ``autogrid=False``. See :ref:`notemxh3` below. Default=40         |
 +-------------+-------------------------------------------------------------------+
-| pxorder     | Pixel ordering method. See :ref:`pxorder` for details and         |
+| pxorder     | Data ordering method. See :ref:`pxorder` for details and          |
 |             | options. Default='natural'                                        |
 +-------------+-------------------------------------------------------------------+
 | doboot      | If ``True``, calculate bootstrap counts and error bars.           |
@@ -88,6 +88,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | cred1,cwei1 | Default=('ra' , 'dec', 'z', 'wei', 'dcom')                        |
 | cdcom1      |                                                                   |
 +-------------+-------------------------------------------------------------------+
+| custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
+|             | limit. See :ref:`custRAbound`. Default=None                       |
++-------------+-------------------------------------------------------------------+
 | outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
 +-------------+-------------------------------------------------------------------+
 
@@ -125,6 +128,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 +-------------+-------------------------------------------------------------------+
 | mxh3        | Nr. of DCOM cells of the SK table. Only relevant if               |
 |             | ``autogrid=False``. See :ref:`notemxh3` below. Default=40         |
++-------------+-------------------------------------------------------------------+
+| pxorder     | Data ordering method. See :ref:`pxorder` for details and          |
+|             | options. Default='natural'                                        |
 +-------------+-------------------------------------------------------------------+
 | doboot      | If ``True``, calculate bootstrap counts and error bars.           |
 |             | Default=False                                                     |
@@ -178,6 +184,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | cred2,cwei2 | Default=('ra' , 'dec', 'z', 'wei', 'dcom')                        |
 | cdcom2      |                                                                   |
 +-------------+-------------------------------------------------------------------+
+| custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
+|             | limit. See :ref:`custRAbound`. Default=None                       |
++-------------+-------------------------------------------------------------------+
 | outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
 +-------------+-------------------------------------------------------------------+
 
@@ -216,6 +225,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | mxh3        | Nr. of DCOM cells of the SK table. Only relevant if               |
 |             | ``autogrid=False``. See :ref:`notemxh3` below. Default=40         |
 +-------------+-------------------------------------------------------------------+
+| pxorder     | Data ordering method. See :ref:`pxorder` for details and          |
+|             | options. Default='natural'                                        |
++-------------+-------------------------------------------------------------------+
 | doboot      | If ``True``, calculate bootstrap counts and error bars.           |
 |             | Default=False                                                     |
 +-------------+-------------------------------------------------------------------+
@@ -251,6 +263,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | cra,cdec,   | Column names in th sample table (tab).                            |
 | cred,cwei,  | Default=('ra' , 'dec', 'z', 'wei', 'dcom')                        |
 | cdcom       |                                                                   |
++-------------+-------------------------------------------------------------------+
+| custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
+|             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
 | outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
 +-------------+-------------------------------------------------------------------+
@@ -289,6 +304,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 +-------------+-------------------------------------------------------------------+
 | mxh3        | Nr. of DCOM cells of the SK table. Only relevant if               |
 |             | ``autogrid=False``. See :ref:`notemxh3` below. Default=40         |
++-------------+-------------------------------------------------------------------+
+| pxorder     | Data ordering method. See :ref:`pxorder` for details and          |
+|             | options. Default='natural'                                        |
 +-------------+-------------------------------------------------------------------+
 | doboot      | If ``True``, calculate bootstrap counts and error bars.           |
 |             | Default=False                                                     |
@@ -331,6 +349,9 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | cra1,cdec1, | Column names in **random** sample (tab1).                         |
 | cred1,cwei1 | Default=('ra' , 'dec', 'z', 'wei', 'dcom')                        |
 | cdcom1      |                                                                   |
++-------------+-------------------------------------------------------------------+
+| custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
+|             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
 | outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
 +-------------+-------------------------------------------------------------------+

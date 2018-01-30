@@ -13,28 +13,23 @@ python module cflibfor ! in
 !   AUXILIARY ROUTINES
 !==========================================================================================
 
-            subroutine bootstrap(npt,nsamp,fixseed,w) ! in :cflibfor:cflibfor.f90:mod
-                integer :: npt,nsamp,fixseed
-                real(kind=4) intent(out),dimension(nsamp,npt) :: w
+            subroutine bootstrap(npt,nboot,fixseed,w) ! in :cflibfor:cflibfor.f90:mod
+                integer :: npt,nboot,fixseed
+                real(kind=4) intent(out),dimension(nboot,npt) :: w
             end subroutine bootstrap
-
-            subroutine bootstrapDP(npt,nsamp,fixseed,w) ! in :cflibfor:cflibfor.f90:mod
-                integer :: npt,nsamp,fixseed
-                real(kind=8) intent(out),dimension(nsamp,npt) :: w
-            end subroutine bootstrapDP
-
+            
 !==========================================================================================
-!   COUNTING ROUTINES - 3D SPHERICAL
+!   COUNTING ROUTINES - 3D SPHERICAL (projected)
 !==========================================================================================
 
-            subroutine skll3d(mxh1,mxh2,mxh3,np,ra,dec,r,sbound,sepv,nsepv,sk,ll) ! in :cflibfor:cflibfor.f90:mod
-                integer :: mxh1,mxh2,mxh3,np,nsepv
-                real(kind=8) dimension(np),depend(np) :: ra,dec
-                real(kind=8) dimension(np),depend(np) :: r
+            subroutine skll3d(mxh1,mxh2,mxh3,npt,ra,dec,dc,sbound,sepv,nsepv,sk,ll) ! in :cflibfor:cflibfor.f90:mod
+                integer :: mxh1,mxh2,mxh3,npt,nsepv
+                real(kind=8) dimension(npt),depend(npt) :: ra,dec
+                real(kind=8) dimension(npt),depend(npt) :: dc
                 real(kind=8) :: sbound(6)
                 real(kind=8) dimension(nsepv + 1),depend(nsepv) :: sepv
                 integer intent(out),dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk
-                integer intent(out),dimension(np),depend(np) :: ll
+                integer intent(out),dimension(npt),depend(npt) :: ll
             end subroutine skll3d
             
             subroutine rppi_A(nt,npt,dec,dc,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,cntid,logf,sk,ll,aapv) ! in :cflibfor:cflibfor.f90:mod
@@ -164,15 +159,138 @@ python module cflibfor ! in
             end subroutine rppi_Cb_wg
 
 !==========================================================================================
+!   COUNTING ROUTINES - 3D SPHERICAL (redshift-space)
+!==========================================================================================
+
+            subroutine s_A(nt,npt,dec,dc,x,y,z,nseps,seps,sbound,mxh1,mxh2,mxh3,cntid,logf,sk,ll,aas) ! in :cflibfor:cflibfor.f90:mod
+                integer :: nt,npt,mxh1,mxh2,mxh3
+                real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z,dc
+                integer :: nseps
+                real(kind=8) dimension(nseps + 1),depend(nseps) :: seps
+                real(kind=8) dimension(6) :: sbound
+                character*2 :: cntid
+                character*80 :: logf
+                integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk
+                integer dimension(npt),depend(npt) :: ll
+                real(kind=8) intent(out),dimension(nseps),depend(nseps) :: aas
+            end subroutine s_A
+
+            subroutine s_A_wg(nt,npt,dec,dc,wei,x,y,z,nseps,seps,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk,ll,aas) ! in :cflibfor:cflibfor.f90:mod
+                integer :: nt,npt,mxh1,mxh2,mxh3,wfib
+                real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z,dc
+                real(kind=4) dimension(npt),depend(npt) :: wei
+                integer :: nseps
+                real(kind=8) dimension(nseps + 1),depend(nseps) :: seps
+                real(kind=8) dimension(6) :: sbound
+                character*2 :: cntid
+                character*80 :: logf
+                integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk
+                integer dimension(npt),depend(npt) :: ll
+                real(kind=8) intent(out),dimension(nseps),depend(nseps) :: aas
+            end subroutine s_A_wg
+
+            subroutine s_Ab(nt,npt,dec,dc,x,y,z,nseps,seps,sbound,mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk,ll,aas,baas) ! in :cflibfor:cflibfor.f90:mod
+                integer :: nt,npt,mxh1,mxh2,mxh3,nbts,bseed
+                real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z,dc
+                integer :: nseps
+                real(kind=8) dimension(nseps + 1),depend(nseps) :: seps
+                real(kind=8) dimension(6) :: sbound
+                character*2 :: cntid
+                character*80 :: logf
+                integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk
+                integer dimension(npt),depend(npt) :: ll
+                real(kind=8) intent(out),dimension(nseps),depend(nseps) :: aas
+                real(kind=8) intent(out),dimension(nbts,nseps),depend(nbts,nseps) :: baas
+            end subroutine s_Ab
+
+            subroutine s_Ab_wg(nt,npt,dec,dc,wei,x,y,z,nseps,seps,sbound,mxh1,mxh2,mxh3,nbts,bseed,wfib,cntid,logf,sk,ll,aas,baas) ! in :cflibfor:cflibfor.f90:mod
+                integer :: nt,npt,mxh1,mxh2,mxh3,wfib,nbts,bseed
+                real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z,dc
+                real(kind=4) dimension(npt),depend(npt) :: wei
+                integer :: nseps
+                real(kind=8) dimension(nseps + 1),depend(nseps) :: seps
+                real(kind=8) dimension(6) :: sbound
+                character*2 :: cntid
+                character*80 :: logf
+                integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk
+                integer dimension(npt),depend(npt) :: ll
+                real(kind=8) intent(out),dimension(nseps),depend(nseps) :: aas
+                real(kind=8) intent(out),dimension(nbts,nseps),depend(nbts,nseps) :: baas
+            end subroutine s_Ab_wg
+
+            subroutine s_C(nt,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,nseps,seps,sbound,mxh1,mxh2,mxh3,cntid,logf,sk1,ll1,cds) ! in :cflibfor:cflibfor.f90:mod
+                integer :: nt,npt,npt1,mxh1,mxh2,mxh3
+                real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z,dc
+                real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1,dc1
+                integer :: nseps
+                real(kind=8) dimension(nseps + 1),depend(nseps) :: seps
+                real(kind=8) dimension(6) :: sbound
+                character*2  :: cntid
+                character*80 :: logf
+                integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk1
+                integer dimension(npt1),depend(npt1) :: ll1
+                real(kind=8) intent(out),dimension(nseps),depend(nseps) :: cds
+            end subroutine s_C
+
+            subroutine s_C_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,nseps,seps,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk1,ll1,cds) ! in :cflibfor:cflibfor.f90:mod
+                integer :: nt,npt,npt1,mxh1,mxh2,mxh3,wfib
+                real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z,dc
+                real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1,dc1
+                real(kind=4) dimension(npt),depend(npt) :: wei
+                real(kind=4) dimension(npt1),depend(npt1) :: wei1
+                integer :: nseps
+                real(kind=8) dimension(nseps + 1),depend(nseps) :: seps
+                real(kind=8) dimension(6) :: sbound
+                character*2  :: cntid
+                character*80 :: logf
+                integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk1
+                integer dimension(npt1),depend(npt1) :: ll1
+                real(kind=8) intent(out),dimension(nseps),depend(nseps) :: cds
+            end subroutine s_C_wg
+
+            subroutine s_Cb(nt,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,nseps,seps,sbound,mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk1,ll1,cds,bcds) ! in :cflibfor:cflibfor.f90:mod
+                integer :: nt,npt,npt1,mxh1,mxh2,mxh3,nbts,bseed
+                real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z,dc
+                real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1,dc1
+                integer :: nseps
+                real(kind=8) dimension(nseps + 1),depend(nseps) :: seps
+                real(kind=8) dimension(6) :: sbound
+                character*2  :: cntid
+                character*80 :: logf
+                integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk1
+                integer dimension(npt1),depend(npt1) :: ll1
+                real(kind=8) intent(out),dimension(nseps),depend(nseps) :: cds
+                real(kind=8) intent(out),dimension(nbts,nseps),depend(nbts,nseps) :: bcds
+            end subroutine s_Cb
+
+            subroutine s_Cb_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,nseps,seps,sbound,mxh1,mxh2,mxh3,nbts,bseed,wfib,cntid,logf,sk1,ll1,cds,bcds) ! in :cflibfor:cflibfor.f90:mod
+                integer :: nt,npt,npt1,mxh1,mxh2,mxh3,wfib,nbts,bseed
+                real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z,dc
+                real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1,dc1
+                real(kind=4) dimension(npt),depend(npt) :: wei
+                real(kind=4) dimension(npt1),depend(npt1) :: wei1
+                integer :: nseps
+                real(kind=8) dimension(nseps + 1),depend(nseps) :: seps
+                real(kind=8) dimension(6) :: sbound
+                character*2  :: cntid
+                character*80 :: logf
+                integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk1
+                integer dimension(npt1),depend(npt1) :: ll1
+                real(kind=8) intent(out),dimension(nseps),depend(nseps) :: cds
+                real(kind=8) intent(out),dimension(nbts,nseps),depend(nbts,nseps) :: bcds
+            end subroutine s_Cb_wg
+
+            
+!==========================================================================================
 !   COUNTING ROUTINES - 2D SPHERICAL
 !==========================================================================================
 
-            subroutine skll2d(mxh1,mxh2,np,ra,dec,sbound,sk,ll) ! in :cflibfor:cflibfor.f90:mod
-                integer :: mxh1,mxh2,np
-                real(kind=8) dimension(np),depend(np) :: ra,dec
+            subroutine skll2d(mxh1,mxh2,npt,ra,dec,sbound,sk,ll) ! in :cflibfor:cflibfor.f90:mod
+                integer :: mxh1,mxh2,npt
+                real(kind=8) dimension(npt),depend(npt) :: ra,dec
                 real(kind=8) :: sbound(4)
                 integer intent(out),dimension(mxh2,mxh1),depend(mxh2,mxh1) :: sk
-                integer intent(out),dimension(np),depend(np) :: ll
+                integer intent(out),dimension(npt),depend(npt) :: ll
             end subroutine skll2d
 
             subroutine th_A(nt,npt,dec,x,y,z,nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk,ll,aa) ! in :cflibfor:cflibfor.f90:mod

@@ -66,3 +66,26 @@ point in the list (in log scale for clarity).
 .. |br| raw:: html
 
    <br />
+
+   
+   
+.. _custRAbound:
+
+Custom RA Boundaries
+====================
+
+The area in the sky occupied by a sample or survey can be composed of multiple 
+scattered "patches" at both sides of the RA=0 limit. In order to efficiently 
+grid and sort such a sample, the area enclosing all of its 
+objects should be minimal, which can be difficult to find out automatically. 
+
+For example, if a survey is composed of two equatorial 1 deg^2 patches, one 
+beginning at RA=355 deg and the other beginning at RA=5 deg, the grid can extend 
+from 5 to 356 deg or, more conveniently, from 355 to 6 deg. The input 
+parameter ``custRAbound`` can be set to indicate such limits. In this case, 
+setting ``custRAbound = [355., 6.]`` will create a much smaller grid and routines
+will perform faster.
+
+Gundam will try to guess if a sample crosses the RA=0 limit
+(see :func:`gundam.cross0guess`).
+

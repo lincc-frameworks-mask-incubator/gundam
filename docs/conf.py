@@ -16,6 +16,11 @@
 import sys
 import os
 
+# We are only documenting routines of the Gundam module.
+# Add this mocks in order to build online docs at read-the-docs. Otherwise
+# it will try to load them after cloning the repository from github. In any
+# case, read-the-docs does not allow to compile external C/Fortran binaries,
+# so this will fail unless cflibfor is mocked
 from unittest.mock import MagicMock
 class Mock(MagicMock):
     @classmethod

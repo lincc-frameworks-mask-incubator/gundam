@@ -51,7 +51,7 @@ notation, meaning to access parameters you just type :code:`par.omegam` (print m
 completion you will certainly love this.
 
 While you can create an input parameter dictionary from scratch, it is far
-easier to use :func:`gundam.pakcpars` to create a skeleton with default values,
+easier to use :func:`gundam.packpars` to create a skeleton with default values,
 and then customize it to your needs. For example
 
 .. code-block:: python
@@ -182,16 +182,22 @@ So far so good, but how do you set the radial integration limit of w(rp)?
 There are two ways:
 
     * **The long way** : you set radial bins (``nsepv``, ``dsepv``) accordingly.
-      For example, to integrate up to 40 Mpc make 40 bins of 1 Mpc with ``nsep=40``, 
+      For example, to integrate up to 40 Mpc make 40 bins of 1 Mpc with ``nsepv=40``, 
       ``dsepv=1.0``
 
     * **The short way** : you set radial bins (``nsepv``, ``dsepv``) accordingly.
-      For example, to integrate up to 40 Mpc make 1 bin of 40 Mpc with ``nsep=1``, 
+      For example, to integrate up to 40 Mpc make 1 bin of 40 Mpc with ``nsepv=1``, 
       ``dsepv=40.``
 
 No need to point out that the short way is faster. Hence, if you don't mind about
-intermediate bins just go straigh with a single "fat" bin. Gundam will always
-integrate the counts of every radial bin requested.
+intermediate bins just go straight with a single "fat" bin. 
+
+Note, however, that if you request a set of radial bins, i.e. ``nsepv>1``, the
+code will: (1) calculate projected correlation function at each radial bin, 
+and (2) sum each contribution. This can be different from adding the counts from all
+radial bins and then applying the estimator because empty bins are not
+neccesarly the same in the DD, RR and DR terms. A single fat bin will have
+higher signal and less noise, especially at small separations.
 
 
 Printing Nicely
@@ -220,7 +226,14 @@ Or you can always try your luck using (i)python regular print
     :scale: 100%
     :alt: Example of regular display of Munch dictionaries
 
-    
+
+Further Examples
+----------------
+
+Data and code for 3 examples of using Gundam are provide in the repo (example_lrg.py,
+example_pcf.py and example_redblue.py).
+
+
 6. Coordinates & Distances
 ==========================
 
@@ -250,3 +263,36 @@ or even better, append your own distances to the input tables and set
 ``calcdist=False``
 
 
+7. Routines, Cells & Counts
+===========================
+
+All Fortran routines are stored in the *cflibfor* library, under the module called *mod*.
+Feel free to directly use these, for example
+
+.. code-block:: python
+    
+    import cfibfor as cff
+    cff.mod.bootstrap(10,4,124567)
+
+    
+or through Gundam 
+
+.. code-block:: python
+    
+    import gundam as gun
+    gun.cff.mod.bootstrap(10,4,124567)
+
+
+Of course the number of cells to use (i.e. ``mxh1``, ``mxh2``, ``mxh3``) has some 
+impact in the performance and the optimum values depends on the 
+sample characteristics, the binning adopted and even the hardware employed. Gundam 
+will try to guess values for these parameters based on simple fittings to galaxy 
+data extracted from the Millenium Simulation. They should work well as starting
+values for many use cases but depending your needs, you might want to fine tune these.
+Just remember to keep it reasonable. For example, if you have half million objects,
+setting ``mxh1=4`` or ``mxh1=400`` is not wise in most cases. Expect typical
+variations of 3-30% in performance for a range of *reasonable* values.
+
+Note the counting routines actually return **half** of real pairs, so depending
+the case you might want to multiply by 2. The estimators for all implemented 
+correlation functions **already do this** for you.
