@@ -62,7 +62,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 +-------------+-------------------------------------------------------------------+
 | nsepv       | Nr. of radial separation bins. Default=1                          |
 +-------------+-------------------------------------------------------------------+
-| dsepv       | Size of radial bins [Mpc/h]. Default=40.                          |
+| dsepv       | Size of radial bins (linear) [Mpc/h]. Default=40.                 |
 +-------------+-------------------------------------------------------------------+
 | calcdist    | If ``False``, take comov. distances from input tables             |
 |             | instead of calculating them. Default=True                         |
@@ -155,7 +155,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 +-------------+-------------------------------------------------------------------+
 | nsepv       | Nr. of radial separation bins. Default=1                          |
 +-------------+-------------------------------------------------------------------+
-| dsepv       | Size of radial bins [Mpc/h]. Default=40.                          |
+| dsepv       | Size of radial bins (linear) [Mpc/h]. Default=40.                 |
 +-------------+-------------------------------------------------------------------+
 | calcdist    | If ``False``, take comov. distances from input tables             |
 |             | instead of calculating them. Default=True                         |
@@ -251,7 +251,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 +-------------+-------------------------------------------------------------------+
 | nsepv       | Nr. of radial separation bins. Default=1                          |
 +-------------+-------------------------------------------------------------------+
-| dsepv       | Size of radial bins [Mpc/h]. Default=40.                          |
+| dsepv       | Size of radial bins (linear) [Mpc/h]. Default=40.                 |
 +-------------+-------------------------------------------------------------------+
 | calcdist    | If ``False``, take comov. distances from input tables             |
 |             | instead of calculating them. Default=True                         |
@@ -331,7 +331,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 +-------------+-------------------------------------------------------------------+
 | nsepv       | Nr. of radial separation bins. Default=1                          |
 +-------------+-------------------------------------------------------------------+
-| dsepv       | Size of radial bins [Mpc/h]. Default=40.                          |
+| dsepv       | Size of radial bins (linear) [Mpc/h]. Default=40.                 |
 +-------------+-------------------------------------------------------------------+
 | calcdist    | If ``False``, take comov. distances from input tables             |
 |             | instead of calculating them. Default=True                         |

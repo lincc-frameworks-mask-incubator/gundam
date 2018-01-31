@@ -115,7 +115,7 @@ Please read [CONTRIBUTING](CONTRIBUTING.md) for details on our code of conduct, 
 
 ## Authors
 
-* **Emilio Donoso** - [(ICATE-Conicet)](mailto:edonoso@conicet.gov.ar)
+* **Emilio Donoso** - ICATE-CONICET [(contact)](mailto:edonoso@conicet.gov.ar)
 
 ## License
 
