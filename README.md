@@ -1,4 +1,4 @@
-# Gundam <img src="./docs/banner.png" width="350">
+# <img src="./docs/banner.png">
 
 A package to count galaxy pairs at light speed and estimate 2-point correlation functions 
 of large galaxy samples or mock catalogs, that works with angular, projected and
