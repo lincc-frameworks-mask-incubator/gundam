@@ -66,8 +66,9 @@ Data and code for 3 examples demonstrating typical use cases are provided in the
 repo (*example_lrg.py*, *example_pcf.py* and *example_redblue.py*). For the moment 
 these are couple plots to illustrate what can be done with Gundam in just a few 
 lines of code  
-![example01](./docs/image01.png)
-![example02](./docs/image02.png)
+
+<img src="./docs/image01.png" width="200">
+<img src="./docs/image02.png" width="200">
     
 ### Prerequisites
 
