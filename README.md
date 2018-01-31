@@ -1,9 +1,22 @@
 # Gundam 
 
-A package to count pairs at light speed and estimate 2-point correlation functions 
-of large galaxy samples or mock catalogs. Works with angular, projected and
-redshift-space coordinates and derives boostrap error estimates. Supports
-custom weigths and works in parallel across your CPU cores.
+A package to count galaxy pairs at light speed and estimate 2-point correlation functions 
+of large galaxy samples or mock catalogs, that works with angular, projected and
+redshift-space coordinates. Its main features are:
+
+* **Speed**  
+By calling Fortran routines that implement efficient skip-list/linked-list algorithms,
+it can be extremely fast  
+* **Parallel**  
+Employs the OpenMP framework to make use of multi-core CPUs  
+* **User-defined Weights and Error Estimates**  
+Accepts weighted pair counts defined by the user and can also estimate statistical
+boostrap errors with minimal overhead  
+* **User-friendly and Flexible**  
+By carefully wrapping Fortran code in a suitable Python framework, it is very easy to use and extend its functionality by both novice and seasoned users  
+* **Bonus Track**  
+Lots of auxiliary and plotting functions to produce nice, paper-ready plots for 
+1D/2D correlations, complete with ratios, labels and even power-law fits  
 
 ## Getting Started
 Input data consists of astropy tables (see [Astropy Tables](http://docs.astropy.org/en/stable/table/)), 
@@ -11,7 +24,7 @@ which provides an excellent I/O framework for a variety of formats (ASCII, VOTab
 
 Gundam also employs special dictionaries (see [Munch](https://pypi.python.org/pypi/munch))
 to pack multiple parameters or output fields at once. Such dictionaries have
-atribute-like access with dot notation. If you are used to ipython's dot+tab 
+attribute-like access with dot notation. If you are used to ipython's dot+tab 
 completion you will love this.
 
 A typical usage workflow consists of:
@@ -32,12 +45,12 @@ gals['wei'] = 1.                     # If there are no weights, just fill with 1
 rans['wei'] = 1.                     # If there are no weights, just fill with 1's
 
 par = gun.packpars(kind='pcf')       # Get defaults for a proj. corr. function (pcf)
-par.h0    = 69.5                     # Change H0
-par.nsepp = 24                       # Set 24 bins in projected separation
-par.dsepp = 0.1                      # Each of size 0.1 dex
+par.h0      = 69.5                   # Change H0
+par.nsepp   = 24                     # Set 24 bins in projected separation
+par.dsepp   = 0.1                    # Each of size 0.1 dex
 par.estimator = 'LS'                 # Pick Landy-Szalay estimator 
 
-c = gun.pcf(gals, rans, par, nthreads=4)     # Estimate pcf using 4 threads
+c = gun.pcf(gals, rans, par, nthreads=4)   # Estimate pcf using 4 threads
 
 c.qprint()                           # Quickly check the output fields (dd, rr, etc.)
 gun.cnttable(c)                      # Or show counts in your browser
@@ -49,8 +62,13 @@ There is a very decent introduction so you can start using Gundam within 5 minut
 and of course the full API.
     
 ## Example Runs
-Data and code for 3 examples of using Gundam are provide in the repo (example_lrg.py,
-example_pcf.py and example_redblue.py).
+Data and code for 3 examples demonstrating typical use cases are provided in the 
+repo (*example_lrg.py*, *example_pcf.py* and *example_redblue.py*).
+
+For the moment these are couple plots to illustrate what can be done with Gundam
+in just a few lines of code
+![example01](./docs/image01.png?raw=true "image01")
+![example02](./docs/image02.png?raw=true "image02")
     
 ### Prerequisites
 
@@ -59,7 +77,7 @@ You will need to have these:
 * [Python 3.5 or later](http://www.python.org/)
 * [GCC Compiler (C, Fortran & OpenMP support)](https://gcc.gnu.org/)
 * [munch](https://pypi.python.org/pypi/munch)
-* [pymorton](https://github.com/trevorprater/pymorton/) (Optional, only needed
+* [pymorton](https://github.com/trevorprater/pymorton/) (optional, only needed
 if experimenting with different orderings)
 
 
@@ -104,7 +122,4 @@ Please read [CONTRIBUTING](CONTRIBUTING.md) for details on our code of conduct, 
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details
 
-## Acknowledgments
-
-* TODO
 
