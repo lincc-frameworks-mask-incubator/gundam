@@ -1,4 +1,4 @@
-# Gundam 
+# Gundam <img src="./docs/banner.png" width="350">
 
 A package to count galaxy pairs at light speed and estimate 2-point correlation functions 
 of large galaxy samples or mock catalogs, that works with angular, projected and
@@ -67,8 +67,7 @@ repo (*example_lrg.py*, *example_pcf.py* and *example_redblue.py*). For the mome
 these are couple plots to illustrate what can be done with Gundam in just a few 
 lines of code  
 
-<img src="./docs/image01.png" width="200">
-<img src="./docs/image02.png" width="200">
+<img src="./docs/image01.png" width="350"> &nbsp;&nbsp;&nbsp; <img src="./docs/image02.png" width="350">
     
 ### Prerequisites
 
