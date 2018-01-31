@@ -5909,8 +5909,8 @@ def buildoutput(par, npts=[], binslmr=[], dd=None, rr=None, dr=None, cd=None,
 #==============================================================================
 #==============================================================================
 if __name__ == "__main__":
-    testsuite = None
     #testsuite = 'proj_cf'                   # example pcf direct input
+    testsuite = None
 
     if testsuite is None:
         print('Basic usage: ')
@@ -5919,55 +5919,3 @@ if __name__ == "__main__":
         print('       # Calculate correlation, e.g. a projected correlation function')
         print('       cnt = gun.pcf(data, randoms, par,...)')
    
-    if testsuite == 'proj_cf':
-        from astropy.io import ascii
-        #os.chdir('/home/edonoso/proj/dev/gundam/py35/src/newipp')
-
-        # DEFINE INPUT PARAMETERS
-        h0       = 100   # Hubble constant
-        omegam   = 0.3   # omega_matter
-        omegal   = 0.7   # omega lambda
-        
-        mxh1     = 50    # SK size in ra
-        mxh2     = 50    # SK size in dec
-        mxh3     = 50    # SK size in z
-        nbts     = 100   # number of bootstrap samples
-
-        nsepp    = 36    # number of bins of projected separation rp
-        seppmin  = 0.01  # minimum rp in Mpc/h
-        dsepp    = 0.1   # bin size of rp (in log space)
-        logsepp  = True  # use log spaced bins
-
-        nsepv    = 1    # number of bins of LOS separation pi
-        dsepv    = 100   # bin size of pi (in linear space)
-
-        galf     = '/home/edonoso/proj/dev/gundam/py35/dat/mz10deg.cat'
-        ranf     = '/home/edonoso/proj/dev/gundam/py35/dat/mz10deg.cat.ran'
-        outfn    = '/home/edonoso/proj/dev/gundam/py35/run/samp01_pcf'
-
-        # PACK INPUT PARAMETERS
-        pars = packpars(kind='pcf',h0=h0, omegam=omegam, omegal=omegal,
-                        mxh1=mxh1, mxh2=mxh2, mxh3=mxh3, nbts=nbts, 
-                        nsepp=nsepp, seppmin=seppmin, dsepp=dsepp, logsepp=logsepp,
-                        nsepv=nsepv, dsepv=dsepv, outfn=outfn)
-
-        # READ INPUT
-        #nms = ['ra','dec','z','apm','abm','zmin','zmax','wei','dcom','dcom1','dcom2']
-        nms = ['ra','dec','z','apm','abm','zmin','zmax','wei']
-        print('Reading file: ', galf)
-        gals = ascii.read(galf,format='no_header',delimiter=' ',
-                          fast_reader={'parallel': True, 'use_fast_converter': True},names=nms)
-        print('--> nr of rows : ', len(gals))
-        print('Reading file: ', ranf)
-        rans = ascii.read(ranf,format='no_header',delimiter=' ',
-                          fast_reader={'parallel': True, 'use_fast_converter': True},names=nms)
-        print('--> nr of rows : ', len(rans))
-
-        #gals['ra'].name='ra2000'
-        #rans['wei'].name='weight'
-        #pars.cold_ra='ra2000'
-        #ars.colr_wei='weight'
-        #rans['weight']=np.random.random(len(rans))
-
-        # DO PCF
-        cnt = pcf(gals,rans,pars,estimator='LS',plot=True)
