@@ -63,12 +63,11 @@ and of course the full API.
     
 ## Example Runs
 Data and code for 3 examples demonstrating typical use cases are provided in the 
-repo (*example_lrg.py*, *example_pcf.py* and *example_redblue.py*).
-
-For the moment these are couple plots to illustrate what can be done with Gundam
-in just a few lines of code
-![example01](./docs/image01.png?raw=true "image01")
-![example02](./docs/image02.png?raw=true "image02")
+repo (*example_lrg.py*, *example_pcf.py* and *example_redblue.py*). For the moment 
+these are couple plots to illustrate what can be done with Gundam in just a few 
+lines of code  
+![example01](./docs/image01.png?raw=true "image01"|width=40)
+![example02](./docs/image02.png?raw=true "image02"|width=40)
     
 ### Prerequisites
 
