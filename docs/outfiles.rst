@@ -38,5 +38,5 @@ different environments, Gundam **always** generates two log files named as
 +--------------------+---------------------------------------------------------+
 
 If ``plot=True``, plots of correlation/counts are shown on screen and also 
-saved to disk in eps format with extensions **.wrp.eps.**, **.xis.eps**, etc.
+saved to disk in pdf format with extensions **.wrp.pdf.**, **.xis.pdf**, etc.
     
