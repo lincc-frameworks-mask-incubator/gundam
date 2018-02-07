@@ -8,7 +8,7 @@ Input Parameters Dictionary (rcf)
 =================================
 
 Dictionary with attribute-style access, that stores all input parameters for the
-code, plus some useful runtime information during output (see :ref:`outaddrt`)
+code, plus some useful run time information during output (see :ref:`outaddrt`)
 
 +-------------+-------------------------------------------------------------------+
 | Parameter   | Description                                                       |
@@ -87,7 +87,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
 |             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
-| outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
+| outfn       | Base name for all output files (e.g. /home/myuser/redagn)         |
 +-------------+-------------------------------------------------------------------+
 
 
@@ -97,7 +97,7 @@ Input Parameters Dictionary (rccf)
 ==================================
 
 Dictionary with attribute-style access, that stores all input parameters for the
-code, plus some useful runtime information during output (see :ref:`outaddrt`)
+code, plus some useful run time information during output (see :ref:`outaddrt`)
 
 +-------------+-------------------------------------------------------------------+
 | Parameter   | Description                                                       |
@@ -179,7 +179,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
 |             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
-| outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
+| outfn       | Base name for all output files (e.g. /home/myuser/redagn)         |
 +-------------+-------------------------------------------------------------------+
 
 
@@ -189,7 +189,7 @@ Input Parameters Dictionary (sA)
 ================================
 
 Dictionary with attribute-style access, that stores all input parameters for the
-code, plus some useful runtime information during output (see :ref:`outaddrt`)
+code, plus some useful run time information during output (see :ref:`outaddrt`)
 
 +-------------+-------------------------------------------------------------------+
 | Parameter   | Description                                                       |
@@ -255,7 +255,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
 |             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
-| outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
+| outfn       | Base name for all output files (e.g. /home/myuser/redagn)         |
 +-------------+-------------------------------------------------------------------+
 
 
@@ -265,7 +265,7 @@ Input Parameters Dictionary (sC)
 ================================
 
 Dictionary with attribute-style access, that stores all input parameters for the
-code, plus some useful runtime information during output (see :ref:`outaddrt`)
+code, plus some useful run time information during output (see :ref:`outaddrt`)
 
 +-------------+-------------------------------------------------------------------+
 | Parameter   | Description                                                       |
@@ -337,7 +337,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
 |             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
-| outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
+| outfn       | Base name for all output files (e.g. /home/myuser/redagn)         |
 +-------------+-------------------------------------------------------------------+
 
 
@@ -345,7 +345,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 
 Note on mxh3
 ============
-Due to perfomance reasons, the number of cells in the radial (comoving) distance
+Due to performance reasons, the number of cells in the radial (comoving) distance
 actually used to build the skip table is always set as ``mxh3=int((dcmax-dcmin)/rvmax)``.
 Hence, the parameter ``mxh3`` supplied at input will be ignored unless it is 
 smaller than this optimum value.

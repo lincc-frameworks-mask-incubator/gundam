@@ -4,7 +4,7 @@ API Reference
 Main Routines (projected space)
 -------------------------------
 
-**These are the main routines for counting pairs and estimating correlation funcions.
+**These are the main routines for counting pairs and estimating correlation functions.
 They encapsulate all required steps to provide a true end-user experience : you
 only need to provide data+parameters to receive final results, and perhaps that
 amazing plot of your next paper**
@@ -18,7 +18,7 @@ amazing plot of your next paper**
 Main Routines (redshift space)
 ------------------------------
 
-**These are the main routines for counting pairs and estimating correlation funcions.
+**These are the main routines for counting pairs and estimating correlation functions.
 They encapsulate all required steps to provide a true end-user experience : you
 only need to provide data+parameters to receive final results, and even that
 amazing plot of your next paper**
@@ -32,7 +32,7 @@ amazing plot of your next paper**
 Main Routines (angular space)
 -----------------------------
 
-**These are the main routines for counting pairs and estimating correlation funcions.
+**These are the main routines for counting pairs and estimating correlation functions.
 They encapsulate all required steps to provide a true end-user experience : you
 only need to provide data+parameters to receive final results, and even that
 amazing plot of your next paper**

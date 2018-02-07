@@ -8,7 +8,7 @@ Input Parameters Dictionary (acf)
 =================================
 
 Dictionary with attribute-style access, that stores all input parameters for the
-code, plus some useful runtime information during output (see :ref:`outaddrt`)
+code, plus some useful run time information during output (see :ref:`outaddrt`)
 
 +-------------+-------------------------------------------------------------------+
 | Parameter   | Description                                                       |
@@ -73,7 +73,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
 |             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
-| outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
+| outfn       | Base name for all output files (e.g. /home/myuser/redagn)         |
 +-------------+-------------------------------------------------------------------+
 
 
@@ -83,7 +83,7 @@ Input Parameters Dictionary (accf)
 ==================================
 
 Dictionary with attribute-style access, that stores all input parameters for the
-code, plus some useful runtime information during output (see :ref:`outaddrt`)
+code, plus some useful run time information during output (see :ref:`outaddrt`)
 
 +-------------+-------------------------------------------------------------------+
 | Parameter   | Description                                                       |
@@ -150,7 +150,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
 |             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
-| outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
+| outfn       | Base name for all output files (e.g. /home/myuser/redagn)         |
 +-------------+-------------------------------------------------------------------+
 
 
@@ -160,7 +160,7 @@ Input Parameters Dictionary (thA)
 =================================
 
 Dictionary with attribute-style access, that stores all input parameters for the
-code, plus some useful runtime information during output (see :ref:`outaddrt`)
+code, plus some useful run time information during output (see :ref:`outaddrt`)
 
 +-------------+-------------------------------------------------------------------+
 | Parameter   | Description                                                       |
@@ -213,7 +213,7 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
 |             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
-| outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
+| outfn       | Base name for all output files (e.g. /home/myuser/redagn)         |
 +-------------+-------------------------------------------------------------------+
 
 
@@ -223,7 +223,7 @@ Input Parameters Dictionary (thC)
 =================================
 
 Dictionary with attribute-style access, that stores all input parameters for the
-code, plus some useful runtime information during output (see :ref:`outaddrt`)
+code, plus some useful run time information during output (see :ref:`outaddrt`)
 
 +-------------+-------------------------------------------------------------------+
 | Parameter   | Description                                                       |
@@ -284,6 +284,6 @@ code, plus some useful runtime information during output (see :ref:`outaddrt`)
 | custRAbound | Specify custom RA boundaries for samples that cross the RA=0      |
 |             | limit. See :ref:`custRAbound`. Default=None                       |
 +-------------+-------------------------------------------------------------------+
-| outfn       | Base name for all ouput files (e.g. /home/myuser/redagn)          |
+| outfn       | Base name for all output files (e.g. /home/myuser/redagn)         |
 +-------------+-------------------------------------------------------------------+
 

@@ -6,7 +6,7 @@ Installation
 
 To install Gundam, you have two choices: (1) build from scratch, or (2) use pip. 
 I recommend method (1), since it will allow easy access to modify or extend the 
-Fortran counting routines. In any case, make sure to fulfil the required
+Fortran counting routines. In any case, make sure to fulfill the required
 :ref:`gundam_dependencies` before installation.
 
           
@@ -61,5 +61,5 @@ sorting methods, but are not really needed if you stick with the default
 sorting scheme).
 
 Gundam has been tested under Anaconda 4.4.0, Python 3.6.1, Numpy 1.12.1 and gcc 7.1.1, running OpenSuse
-in an Intel plataform.
+in an Intel platform.
 

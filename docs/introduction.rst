@@ -12,7 +12,7 @@ which provide  all the functionality to manipulate tabular data, and to read/wri
 in a variety of formats (ASCII, VOTable, FITS tables, etc.)
 
 These input tables should have columns for **at least** angular coordinates and 
-weights, but note the default names of columns can be overriden so there is no need
+weights, but note the default names of columns can be overridden so there is no need
 to rename your original table (e.g. that infamous "RAJ_2000" instead of "ra"). 
 Extra columns are welcome though as the name implies, are indeed extra and 
 consume extra memory
@@ -44,7 +44,7 @@ For example, data in FITS format can be read simply by
 
 Since there are quite a few parameters to deal, Gundam employs a special 
 dictionary (see `Munch <https://pypi.python.org/pypi/munch>`_) to pack and pass 
-all of them at once. This dictionary also has atribute-like access with dot 
+all of them at once. This dictionary also has attribute-like access with dot 
 notation, meaning to access parameters you just type :code:`par.omegam` (print matter density), 
 :code:`par.h0=100.` (set Hubble constant), etc. If you are used to ipython+tab
 completion you will certainly love this.
@@ -124,7 +124,7 @@ set :code:`nthreads` as in
         cnt = gun.pcf(gals, rans, par, nthreads=8)
         
 That's all. Under the hood, the software divides the counting process in several 
-declinations stripes, computes the pairs in each, and adds everyhing up at 
+declinations stripes, computes the pairs in each, and adds everything up at 
 the end. OpenMP threads are created and scheduled by the underlying Fortran code.
 
 
@@ -195,7 +195,7 @@ Note, however, that if you request a set of radial bins, i.e. ``nsepv>1``, the
 code will: (1) calculate projected correlation function at each radial bin, 
 and (2) sum each contribution. This can be different from adding the counts from all
 radial bins and then applying the estimator because empty bins are not
-neccesarly the same in the DD, RR and DR terms. A single fat bin will have
+necessarily the same in the DD, RR and DR terms. A single fat bin will have
 higher signal and less noise, especially at small separations.
 
 
@@ -286,7 +286,7 @@ Of course the number of cells to use (i.e. ``mxh1``, ``mxh2``, ``mxh3``) has som
 impact in the performance and the optimum values depends on the 
 sample characteristics, the binning adopted and even the hardware employed. Gundam 
 will try to guess values for these parameters based on simple fittings to galaxy 
-data extracted from the Millenium Simulation. They should work well as starting
+data extracted from the Millennium Simulation. They should work well as starting
 values for many use cases but depending your needs, you might want to fine tune these.
 Just remember to keep it reasonable. For example, if you have half million objects,
 setting ``mxh1=4`` or ``mxh1=400`` is not wise in most cases. Expect typical

@@ -758,7 +758,7 @@ subroutine rppi_Ab(nt,npt,dec,dc,x,y,z,nsepp,sepp,nsepv,sepv,sbound, &
 ! OUTPUTS
 !  Variable---Type-------------Description--------------------------------------
 !  aapv       r8(nsepv,nsepp)       Counts in radial and projected separation bins
-!  baapv      r8(nbts,nsepv,nsepp)  Boostrap counts in radial and projected separation bins
+!  baapv      r8(nbts,nsepp,nsepv)  Boostrap counts in radial and projected separation bins
 !
 ! NOTES  -----------------------------------------------------------------------
 !  1. RA limits should be set to ramin=0 and ramax=360.
@@ -769,7 +769,7 @@ implicit none
 real(kind=8)  :: dec(npt),sbound(6),ral,rau,decl,decu,dcoml,dcomu,hc1,hc2,hc3,rp2
 real(kind=8)  :: x(npt),y(npt),z(npt),dc(npt),rcl,stm2,dltdec,dltra,dci,xi,yi,zi
 real(kind=8)  :: sepp(nsepp+1),sepv(nsepv+1),sepp2(nsepp+1),rpmax,rpmax2,rvmax,rv,idsepv
-real(kind=8)  :: aapv(nsepv,nsepp),baapv(nbts,nsepv,nsepp)
+real(kind=8)  :: aapv(nsepv,nsepp),baapv(nbts,nsepp,nsepv)
 real(kind=4)  :: wbts(nbts,npt)
 integer       :: sk(mxh3,mxh2,mxh1),ll(npt),mxh1,mxh2,mxh3,npt,nsepp,nsepv
 integer       :: nt,nthr,nc1,nc2,nc3,jq1m,jq2m,nbts,bseed
@@ -887,13 +887,13 @@ do iq1=1,nc1
                                jj = 1 + int(rv*idsepv)       !find rv bin number
                                if(rp2>sepp2(nsepp)) then 
                                   aapv(jj,nsepp) = aapv(jj,nsepp) + 1.0d0
-                                  baapv(:,jj,nsepp) = baapv(:,jj,nsepp) + wbts(:,i)*wbts(:,j)
+                                  baapv(:,nsepp,jj) = baapv(:,nsepp,jj) + wbts(:,i)*wbts(:,j)
                                   goto 70
                                endif
                                do ii=nsepp-1,1,-1
                                   if(rp2>sepp2(ii)) then
                                      aapv(jj,ii) = aapv(jj,ii) + 1.0d0
-                                     baapv(:,jj,ii) = baapv(:,jj,ii) + wbts(:,i)*wbts(:,j)
+                                     baapv(:,ii,jj) = baapv(:,ii,jj) + wbts(:,i)*wbts(:,j)
                                      goto 70
                                   endif
                                enddo
@@ -957,7 +957,7 @@ subroutine rppi_Ab_wg(nt,npt,dec,dc,wei,x,y,z,nsepp,sepp,nsepv,sepv,sbound, &
 ! OUTPUTS
 !  Variable---Type-------------Description--------------------------------------
 !  aapv       r8(nsepv,nsepp)       Counts in radial and projected separation bins
-!  baapv      r8(nbts,nsepv,nsepp)  Boostrap counts in radial and projected separation bins
+!  baapv      r8(nbts,nsepp,nsepv)  Boostrap counts in radial and projected separation bins
 !
 ! NOTES  -----------------------------------------------------------------------
 !  1. RA limits should be set to ramin=0 and ramax=360.
@@ -969,7 +969,7 @@ real(kind=8)  :: dec(npt),sbound(6),ral,rau,decl,decu,dcoml,dcomu,hc1,hc2,hc3,rp
 real(kind=4)  :: wei(npt),wpp,wi
 real(kind=8)  :: x(npt),y(npt),z(npt),dc(npt),rcl,stm2,dltdec,dltra,dci,xi,yi,zi
 real(kind=8)  :: sepp(nsepp+1),sepv(nsepv+1),sepp2(nsepp+1),rpmax,rpmax2,rvmax,rv,shth2,idsepv
-real(kind=8)  :: aapv(nsepv,nsepp),baapv(nbts,nsepv,nsepp)
+real(kind=8)  :: aapv(nsepv,nsepp),baapv(nbts,nsepp,nsepv)
 real(kind=4)  :: wbts(nbts,npt)
 integer       :: sk(mxh3,mxh2,mxh1),ll(npt),mxh1,mxh2,mxh3,npt,nsepp,nsepv
 integer       :: nt,nthr,nc1,nc2,nc3,jq1m,jq2m,nbts,bseed,wfib
@@ -1093,13 +1093,13 @@ do iq1=1,nc1
                                endif
                                if(rp2>sepp2(nsepp)) then 
                                   aapv(jj,nsepp) = aapv(jj,nsepp) + wpp
-                                  baapv(:,jj,nsepp) = baapv(:,jj,nsepp) + wpp*wbts(:,i)*wbts(:,j)
+                                  baapv(:,nsepp,jj) = baapv(:,nsepp,jj) + wpp*wbts(:,i)*wbts(:,j)
                                   goto 70
                                endif
                                do ii=nsepp-1,1,-1
                                   if(rp2>sepp2(ii)) then
                                      aapv(jj,ii) = aapv(jj,ii) + wpp
-                                     baapv(:,jj,ii) = baapv(:,jj,ii) + wpp*wbts(:,i)*wbts(:,j)
+                                     baapv(:,ii,jj) = baapv(:,ii,jj) + wpp*wbts(:,i)*wbts(:,j)
                                      goto 70
                                   endif
                                enddo
@@ -1549,7 +1549,7 @@ subroutine rppi_Cb(nt,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,nsepp,sepp,nsepv,sep
 ! OUTPUTS
 !  Variable---Type-------------Description--------------------------------------
 !  cdpv       r8(nsepv,nsepp)      Counts in radial and projected separation bins
-!  bcdpv      r8(nbts,nsepv,nsepp) Boostrap counts in radial and projected separation bins
+!  bcdpv      r8(nbts,nsepp,nsepv) Boostrap counts in radial and projected separation bins
 !
 ! NOTES  -----------------------------------------------------------------------
 !  1. RA limits should be set to ramin=0 and ramax=360.
@@ -1562,7 +1562,7 @@ real(kind=8)  :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1),rcl,stm2,dltdec
 real(kind=8)  :: dc(npt),dc1(npt1),xi,dci
 real(kind=4)  :: wbts(nbts,npt),wbts1(nbts,npt1)
 real(kind=8)  :: sepp(nsepp+1),sepv(nsepv+1),sepp2(nsepp+1),rpmax,rpmax2,rvmax,rv,idsepv
-real(kind=8)  :: cdpv(nsepv,nsepp),bcdpv(nbts,nsepv,nsepp)
+real(kind=8)  :: cdpv(nsepv,nsepp),bcdpv(nbts,nsepp,nsepv)
 integer       :: sk1(mxh3,mxh2,mxh1),ll1(npt1),mxh1,mxh2,mxh3,npt,npt1,nsepp,nsepv,nbts,bseed
 integer       :: nt,nthr,ndp,fracp,dpart,nadv,nc1,nc2,nc3,jq1m,jq2m
 integer       :: i,ii,j,jj,iq1,iq2,iq3,jq1,jq2,jq3,jq2min,jq2max,jq2t,p1,p2
@@ -1682,13 +1682,13 @@ do i=1,npt   !---- Loop over ith particles ----
                      jj = 1 + int(rv*idsepv)       !find rv bin number
                      if(rp2>sepp2(nsepp)) then 
                         cdpv(jj,nsepp) = cdpv(jj,nsepp) + 1.0d0
-                        bcdpv(:,jj,nsepp) = bcdpv(:,jj,nsepp) + wbts(:,i)*wbts1(:,j)
+                        bcdpv(:,nsepp,jj) = bcdpv(:,nsepp,jj) + wbts(:,i)*wbts1(:,j)
                         goto 70
                      endif
                      do ii=nsepp-1,1,-1
                         if(rp2>sepp2(ii)) then
                            cdpv(jj,ii) = cdpv(jj,ii) + 1.0d0
-                           bcdpv(:,jj,ii) = bcdpv(:,jj,ii) + wbts(:,i)*wbts1(:,j)
+                           bcdpv(:,ii,jj) = bcdpv(:,ii,jj) + wbts(:,i)*wbts1(:,j)
                            goto 70
                         endif
                      enddo
@@ -1753,7 +1753,7 @@ subroutine rppi_Cb_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1, &
 ! OUTPUTS
 !  Variable---Type-------------Description--------------------------------------
 !  cdpv       r8(nsepv,nsepp)  Counts in radial and projected separation bins
-!  bcdpv      r8(nbts,nsepv,nsepp) Boostrap counts in radial and projected separation bins
+!  bcdpv      r8(nbts,nsepp,nsepv) Boostrap counts in radial and projected separation bins
 !
 ! NOTES  -----------------------------------------------------------------------
 !  1. RA limits should be set to ramin=0 and ramax=360.
@@ -1767,7 +1767,7 @@ real(kind=8)  :: dc(npt),dc1(npt1),xi,dci
 real(kind=4)  :: wei(npt),wei1(npt1),wi,wpp
 real(kind=4)  :: wbts(nbts,npt),wbts1(nbts,npt1)
 real(kind=8)  :: sepp(nsepp+1),sepv(nsepv+1),sepp2(nsepp+1),rpmax,rpmax2,rvmax,rv,idsepv,shth2
-real(kind=8)  :: cdpv(nsepv,nsepp),bcdpv(nbts,nsepv,nsepp)
+real(kind=8)  :: cdpv(nsepv,nsepp),bcdpv(nbts,nsepp,nsepv)
 integer       :: sk1(mxh3,mxh2,mxh1),ll1(npt1),mxh1,mxh2,mxh3,npt,npt1,nsepp,nsepv,nbts,bseed,wfib
 integer       :: nt,nthr,ndp,fracp,dpart,nadv,nc1,nc2,nc3,jq1m,jq2m
 integer       :: i,ii,j,jj,iq1,iq2,iq3,jq1,jq2,jq3,jq2min,jq2max,jq2t,p1,p2
@@ -1894,13 +1894,13 @@ do i=1,npt   !---- Loop over ith particles ----
                      endif
                      if(rp2>sepp2(nsepp)) then 
                         cdpv(jj,nsepp) = cdpv(jj,nsepp) + wpp
-                        bcdpv(:,jj,nsepp) = bcdpv(:,jj,nsepp) + wpp*wbts(:,i)*wbts1(:,j)
+                        bcdpv(:,nsepp,jj) = bcdpv(:,nsepp,jj) + wpp*wbts(:,i)*wbts1(:,j)
                         goto 70
                      endif
                      do ii=nsepp-1,1,-1
                         if(rp2>sepp2(ii)) then
                            cdpv(jj,ii) = cdpv(jj,ii) + wpp
-                           bcdpv(:,jj,ii) = bcdpv(:,jj,ii) + wpp*wbts(:,i)*wbts1(:,j)
+                           bcdpv(:,ii,jj) = bcdpv(:,ii,jj) + wpp*wbts(:,i)*wbts1(:,j)
                            goto 70
                         endif
                      enddo

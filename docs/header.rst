@@ -19,7 +19,7 @@ User-friendly
     data, (2) define parameters, (3) get counts
 
 Error estimates, user-defined weights, fiber corrections
-    Gundam can estimate boostrap errors, weight pair counts, and even correct 
+    Gundam can estimate bootstrap errors, weight pair counts, and even correct 
     counts for fiber collisions
 
 Plotting functions
@@ -36,7 +36,7 @@ in a dictionary-like object that holds all calculations, input parameters
 and log messages. Share this object with your collaborators instead of just
 the final plot.
 
-Though intented primarly for redshift surveys, it can also be adapted for 
+Though intended primarily for redshift surveys, it can also be adapted for 
 simulation data and ultimately for any set of points in space.
 
 

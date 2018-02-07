@@ -2741,8 +2741,8 @@ def tidy_counts(tt, par):
     # Transpose resuls back to a more natural order in python, as Fortran 
     # routines return arrays with dimensions exchanged to optimize cache utilization
     if par.kind in ['pcf','pccf','rppiA','rppiC']:
-        dd = dd.transpose([1,0])
-        bdd = bdd.transpose([2,1,0])
+        dd = dd.transpose([1,0])        #orig=[1,0]    invert=[0,1]
+        bdd = bdd.transpose([1,2,0])    #orig=[2,1,0]  invert=[0,1,2]
     if par.kind in ['acf','accf','rcf','rccf','thA','sA','thC','sC']:
         bdd = bdd.transpose([1,0])
     return (dd,bdd)
@@ -3414,7 +3414,7 @@ def rppi_A(tab, par, nthreads=-1, write=True, plot=False, **kwargs):
     # Tidy ouput counts and integrate along pi direction  ---------------------
     dd, bdd = tidy_counts(tt1, par)
     intpi   = dd.sum(axis=1)
-    intpib  = bdd.sum(axis=1) if par.doboot else None
+    intpib  = bdd.sum(axis=1) if par.doboot else None 
     
     # Do plot if desired  -----------------------------------------------------
     if plot:
