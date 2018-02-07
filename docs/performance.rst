@@ -15,14 +15,14 @@ before counting pairs, and the effect of choosing a good grid size for samples
 of increasing density.
 
 .. image:: bench_rppiA_plot2.png
-    :scale: 50%
+    :scale: 60%
     :alt: DD(rp,pi) performance2
 
 Now we compare with one of the fastest publicity available codes 
 (`corrfunc <https://github.com/manodeep/Corrfunc/>`_)
     
 .. image:: bench_rppiA_plot1.png
-    :scale: 50%
+    :scale: 60%
     :alt: DD(rp,pi) performance1
     
 The equipment employed for testing is based in a four core i7-3770K 3.5GHz CPU 
