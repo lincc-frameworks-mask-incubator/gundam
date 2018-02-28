@@ -5,8 +5,7 @@ GUNDAM :  A Toolkit For Fast Two-Point Correlation Functions
 
 @author: Emilio Donoso <edonoso@conicet.gov.ar>
 """
-# Define imports
-# =============================================================================
+#   Define imports   ==========================================================
 from __future__ import print_function
 import numpy as np
 import os, sys
@@ -20,12 +19,13 @@ import cflibfor as cff
 from collections import OrderedDict
 import matplotlib
 import matplotlib.pyplot as plt
-
+#==============================================================================
 
 cps = 0  # Current plot style, as defined in plotcf(). Incremented each time
          # that function is called.
 
 
+# =============================================================================
 def set_threads(t):
     """
     Set maximum number of threads to use. When ``t=-1`` defaults to the value 
@@ -50,6 +50,7 @@ def set_threads(t):
     return t
 
 
+# =============================================================================
 def comdis_worker(z, cosmo):
     """ Worker function for comoving distancesm For more info check the documentation
     of astropy.cosmology module
@@ -57,6 +58,7 @@ def comdis_worker(z, cosmo):
     return cosmo.comoving_distance(z).value
 
 
+# =============================================================================
 def comdis(z, par, nproc):
     """
     Calculate comoving distances in parallel using multiprocessing and astropy
@@ -95,6 +97,7 @@ def comdis(z, par, nproc):
     return res
 
 
+# =============================================================================
 def cfindex(path='./'):
     """
     List file_name + description of all **count** (.cnt) files in a given path.
@@ -322,7 +325,7 @@ def qprint(self):
 
 
 # =============================================================================
-# Add qprint() method to Munch class
+# Add qprint() method to Munch class. There must be better ways to do this
 setattr(Munch,'qprint',qprint)
 # =============================================================================
 
@@ -534,9 +537,9 @@ def makebins(nsep, sepmin, dsep, logsep):
     .. rubric:: Returns
     
     sep : float array
-        Bin locations used by Gundam
+        Bin locations used by Gundam (left-side + extra bin at right limit)
     sepout : float array
-        Left, middle and right side-points of each bin. Useful to plot more easily
+        Left, middle and right-side points of each bin. Useful to plot more easily
 
     .. rubric:: Examples
     
@@ -1925,10 +1928,10 @@ def tpcf_wrp(npt,nrpt,dd,bdd,rr,dr,dsepv,estimator):
             wrperr[i] = 2.*np.std(tbwrp) if nbts>0 else 0.
     return (wrp,wrperr)
 
-
+# =============================================================================
 def plotboot(cnt):
     """
-    Just a script to calculate and plot the w(rp) of each bootstrap sample,
+    Just a test script to calculate and plot the w(rp) of each bootstrap sample,
     using Landy-Szalay estimator
     """
     npt, nrpt = 1.*cnt.npt, 1.*cnt.npt1
@@ -2229,175 +2232,6 @@ def packpars(kind='pcf',**kwargs):
 
     return p
 
-
-
-# =============================================================================
-def fcall_sA(ixh1):
-    """
-    Wrapper for Fortran routines to calculate auto-correlation counts in redshift
-    space (multi-core version)
-    
-    All data and parameters needed should have been **previously pused** to 
-    ipyparallel engines, e.g. with `dv.push(dict(npt=npt, ra=tab['RA'].data, ...)`.
-    Check :ref:`api_fwrappers` for an exhaustive list
-    
-    .. rubric :: Parameters
-    
-    ixh1 : integer
-        Skip cell index in which to compute the counts
-        
-    .. rubric :: Returns
-    
-    res : array or list of arrays
-        Ouput counts from Fortran subroutines
-    """
-    msg = '('+par.cntid+') Counting in DEC band > '+str(ixh1)+' / '+str(par.mxh1)
-    print(msg) ; sys.stdout.flush()
-    # Run code inside capture() context to retrieve Fotran stdout/stderr
-    with capture(logfile = par.outfn + '.fortran.log', docapture=True):
-        if par.doboot:
-            if (par.wfib==0 and allw):  #--- Fastest unweighted function
-                res = cff.mod.s_Ab(ixh1,npt,dec,dc,x,y,z,
-                                   par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                   par.nbts,par.bseed,par.cntid,sk,ll)
-            else:                       #--- Normal weighted function
-                res = cff.mod.s_Ab_wg(ixh1,npt,dec,dc,wei,x,y,z,
-                                      par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                      par.nbts,par.bseed,par.cntid,par.wfib,sk,ll)
-        else:
-            if (par.wfib==0 and allw):  #--- Fastest unweighted function
-                res = cff.mod.s_A(ixh1,npt,dec,dc,x,y,z,
-                                  par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                  par.cntid,sk,ll)
-            else:                       #--- Normal weighted function
-                res = cff.mod.s_A_wg(ixh1,npt,dec,dc,wei,x,y,z,
-                                     par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                     par.cntid,par.wfib,sk,ll)
-    return res
-
-
-# =============================================================================
-def fcall_sA_serial(npt, ra, dec, dc, wei, x, y, z, seps, sk, ll, allw, par):
-    """
-    Wrapper for Fortran routines to calculate auto-correlation counts in redshift
-    space (single-core version)
-    
-    Instead of pushing, we have to pass directly all data and any parameter 
-    needed by the Fortran **s_Ax_xx()** subroutines. Check :ref:`api_fwrappers`
-    for an exhaustive list
-    
-    .. rubric :: Returns
-    
-    res : array or list of arrays
-        Ouput counts from Fortran subroutines
-    """
-    # Run code inside capture() context to retrieve Fotran stdout/stderr
-    with capture(logfile = par.outfn + '.fortran.log', docapture=True):
-        if par.doboot:
-            if (par.wfib==0 and allw):  #--- Fastest unweighted function
-                res = cff.mod.s_Ab(-1,npt,dec,dc,x,y,z,
-                                   par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                   par.nbts,par.bseed,par.cntid,sk,ll)
-            else:                       #--- Normal weighted function
-                res = cff.mod.s_Ab_wg(-1,npt,dec,dc,wei,x,y,z,
-                                      par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                      par.nbts,par.bseed,par.cntid,par.wfib,sk,ll)
-        else:
-            if (par.wfib==0 and allw):  #--- Fastest unweighted function
-                res = cff.mod.s_A(-1,npt,dec,dc,x,y,z,
-                                  par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                  par.cntid,sk,ll)
-            else:                       #--- Normal weighted function
-                res = cff.mod.s_A_wg(-1,npt,dec,dc,wei,x,y,z,
-                                     par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                     par.cntid,par.wfib,sk,ll)
-    return res
-
-
-# =============================================================================
-def fcall_sC(ixh1):
-    """
-    Wrapper for Fortran routines to calculate cross-correlation counts in redshift
-    space (multi-core version)
-    
-    All data and parameters needed should have been **previously pused** to 
-    ipyparallel engines, e.g. with `dv.push(dict(npt=npt, ra=tab['RA'].data, ...)`.
-    Check :ref:`api_fwrappers` for an exhaustive list
-    
-    .. rubric :: Parameters
-    
-    ixh1 : integer
-        Skip cell index in which to compute the counts
-        
-    .. rubric :: Returns
-    
-    res : array or list of arrays
-        Ouput counts from Fortran subroutines
-    """
-    msg = '('+par.cntid+') Counting in DEC band > '+str(ixh1)+' / '+str(par.mxh1)
-    print(msg)  ; sys.stdout.flush()
-    # Run code inside capture() context to retrieve Fotran stdout/stderr
-    with capture(logfile = par.outfn + '.fortran.log', docapture=True):
-        if par.doboot:
-            if (par.wfib==0 and allw):  #--- Fastest unweighted function
-                res = cff.mod.s_Cb(ixh1,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,
-                                    par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                    par.nbts,par.bseed,par.cntid,sk1,ll1)
-            else:                       #--- Normal weighted function
-                res = cff.mod.s_Cb_wg(ixh1,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,
-                                      par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                      par.nbts,par.bseed,par.cntid,par.wfib,sk1,ll1)
-        else:
-            if (par.wfib==0 and allw):  #--- Fastest unweighted function
-                res = cff.mod.s_C(ixh1,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,
-                                  par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                  par.cntid,sk1,ll1)
-            else:                       #--- Normal weighted function
-                res = cff.mod.s_C_wg(ixh1,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,
-                                     par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                     par.cntid,par.wfib,sk1,ll1)
-    return res
-
-
-# =============================================================================
-def fcall_sC_serial(npt, ra, dec, dc, wei, x, y, z, npt1, ra1, dec1, dc1, wei1, x1, y1, z1, 
-                    seps, sk1, ll1, allw, par):
-    """
-    Wrapper for Fortran routines to calculate cross-correlation counts in redshift
-    space (single-core version)
-    
-    Instead of pushing, we have to pass directly all data and any parameter 
-    needed by the Fortran **s_Cx_xx()** subroutines. Check :ref:`api_fwrappers`
-    for an exhaustive list
-    
-    .. rubric :: Returns
-    
-    res : array or list of arrays
-        Ouput counts from Fortran subroutines
-    """
-    # Run code inside capture() context to retrieve Fotran stdout/stderr
-    with capture(logfile = par.outfn + '.fortran.log', docapture=True):
-        if par.doboot:
-            if (par.wfib==0 and allw):  #--- Fastest unweighted function
-                res = cff.mod.s_Cb(-1,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,
-                                    par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                    par.nbts,par.bseed,par.cntid,sk1,ll1)
-            else:                       #--- Normal weighted function
-                res = cff.mod.s_Cb_wg(-1,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,
-                                      par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                      par.nbts,par.bseed,par.cntid,par.wfib,sk1,ll1)
-        else:
-            if (par.wfib==0 and allw):  #--- Fastest unweighted function
-                res = cff.mod.s_C(-1,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,
-                                  par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                  par.cntid,sk1,ll1)
-            else:                       #--- Normal weighted function
-                res = cff.mod.s_C_wg(-1,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,
-                                     par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,
-                                     par.cntid,par.wfib,sk1,ll1)
-    return res
-
-
     
 # =============================================================================
 def radec2xyz(ra, dec, r=0.5):
@@ -2485,6 +2319,7 @@ def bound2d(decs):
     decmax = min(max([max(d) for d in decs]) + delta, 90.)
     return (ramin,ramax,decmin,decmax)
 
+
 # =============================================================================
 def cross0guess(ra):
     """
@@ -2503,6 +2338,7 @@ def cross0guess(ra):
     """
     res = (np.where(ra>359.)[0].size)>0 and (np.where(ra<1.)[0].size)>0
     return res 
+
 
 # =============================================================================
 def logtimming(log, cntid, t):
@@ -2774,7 +2610,7 @@ def addlog(file, key, m):
 # =============================================================================
 def pixsort(tab, colnms, par):
     """
-    Divide an astropy table with (ra,dec) or (ra,dec,z) data into a grid of 
+    Arrange an astropy table with (ra,dec) or (ra,dec,z) data into a grid of 
     SK pixels and sort the rows of the table according to the pixel index, ordered
     by a given methodology. This way data in a given pixel sits closer in memory, 
     largely increasing the efficiency of the cache.
@@ -2816,7 +2652,7 @@ def pixsort(tab, colnms, par):
         pxra    = np.digitize(tab[cra].data, bins=binsra)   # opt. add as column tab['pxra']
         binsdec = np.linspace(decmin, decmax, num=par.mxh1)
         pxdec   = np.digitize(tab[cdec].data, bins=binsdec) # opt. add as column tab['pxdec']
-        binsred = np.linspace(zmin, zmax, num=np.int(par.mxh3*10)) #num=par.mxh3*10
+        binsred = np.linspace(zmin, zmax, num=np.int(par.mxh3)) #num=par.mxh3*10
         pxred   = np.digitize(tab[cred].data, bins=binsred) # opt. add as column tab['pxred']
 
         # CHOOSE THE ORDERING METHOD  ================================
@@ -2825,7 +2661,8 @@ def pixsort(tab, colnms, par):
         if par.pxorder is 'natural':
             # lexsort() is ~2x faster than argsort(), e.g. sidx=tab.argsort(['pxdec','pxra','pxred'])
             # Note sorting keys must be given in reverse order, i.e. from last to first
-            sidx = np.lexsort((pxred, pxra, pxdec))
+            sidx = np.lexsort((pxra, pxdec, pxred))
+            #sidx = np.lexsort((pxred, pxra, pxdec))
 
         # Morton order in RA-DEC, using the RA-DEC FP values multiplied by a
         # large(?) integer
@@ -3120,7 +2957,7 @@ def pairs_auto(par, wunit, logff, tab, x, y, z, sk, ll, dc=None):
     nt  = par.nthreads
     npt = len(tab)
 
-    if par.kind in ('pcf','rppiA'):  ############  Proyected Space  ###########
+    if par.kind in ('rppiA'):  ############  Proyected Space  ########### 'pcf'
         sepp = makebins(par.nsepp, par.seppmin, par.dsepp, par.logsepp)[0]
         sepv = makebins(par.nsepv, 0., par.dsepv, False)[0]
         if par.doboot:     # Counting Data + Boostrap
@@ -3138,7 +2975,7 @@ def pairs_auto(par, wunit, logff, tab, x, y, z, sk, ll, dc=None):
                 args = [nt,npt,tab[par.cdec].data,dc,tab[par.cwei],x,y,z,par.nsepp,sepp,par.nsepv,sepv,par.sbound,par.mxh1,par.mxh2,par.mxh3,par.wfib,par.cntid,logff,sk,ll]
                 tt   = cff.mod.rppi_A_wg(*args)      # weighted counting
 
-    if par.kind in ('rcf','sA'):     ###########  Redsfhift Space   ###########
+    if par.kind in ('sA'):     ###########  Redsfhift Space   ########### 'rcf'
         seps = makebins(par.nseps, par.sepsmin, par.dseps, par.logseps)[0]
         if par.doboot:     # Counting Data + Boostrap
             if (par.wfib==False and wunit):
@@ -3156,7 +2993,7 @@ def pairs_auto(par, wunit, logff, tab, x, y, z, sk, ll, dc=None):
                 args = [nt,npt,tab[par.cdec].data,dc,tab[par.cwei],x,y,z,par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,par.wfib,par.cntid,logff,sk,ll]
                 tt   = cff.mod.s_A_wg(*args)      # weighted counting
 
-    if par.kind in ('acf','thA'):  #############  Angular Space  ##############
+    if par.kind in ('thA'):  #############  Angular Space  ############## 'acf'
         sept= makebins(par.nsept, par.septmin, par.dsept, par.logsept)[0]
         if par.doboot:     # Counting Data + Boostrap
             if (par.wfib==False and wunit):
@@ -3224,7 +3061,7 @@ def pairs_cross(par, wunit, logff, tab, x, y, z, tab1, x1, y1, z1, sk1, ll1, dc=
     npt  = len(tab)
     npt1 = len(tab1)
 
-    if par.kind in ('pccf','rppiC'):  ###########  Proyected Space  ###########
+    if par.kind in ('rppiC'):  ###########  Proyected Space  ########### 'pccf'
         sepp = makebins(par.nsepp, par.seppmin, par.dsepp, par.logsepp)[0]
         sepv = makebins(par.nsepv, 0., par.dsepv, False)[0]
         if par.doboot:     # Counting Data + Boostrap
@@ -3242,14 +3079,13 @@ def pairs_cross(par, wunit, logff, tab, x, y, z, tab1, x1, y1, z1, sk1, ll1, dc=
                 args = [nt,npt,tab[par.cra].data,tab[par.cdec].data,dc,tab[par.cwei].data,x,y,z,npt1,dc1,tab1[par.cwei1].data,x1,y1,z1,par.nsepp,sepp,par.nsepv,sepv,par.sbound,par.mxh1,par.mxh2,par.mxh3,par.wfib,par.cntid,logff,sk1,ll1]
                 tt   = cff.mod.rppi_C_wg(*args)      # weighted counting
 
-    if par.kind in ('rccf','sC'):  ############  Proyected Space  #############
+    if par.kind in ('sC'):  ############  Proyected Space  ############# 'rccf'
         seps = makebins(par.nseps, par.sepsmin, par.dseps, par.logseps)[0]
         if par.doboot:     # Counting Data + Boostrap
             if (par.wfib==False and wunit):
                 args = [nt,npt,tab[par.cra].data,tab[par.cdec].data,dc,x,y,z,npt1,dc1,x1,y1,z1,par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,par.nbts,par.bseed,par.cntid,logff,sk1,ll1]
                 tt   = cff.mod.s_Cb(*args)        # fast unweighted counting
             else:
-                #args = [nt,npt,tab[par.cra].data,tab[par.cdec].data,dc,tab[par.cwei].data,x,y,z,npt1,dc1,tab1[par.cwei1].data,x1,y1,z1,par.nsepp,sepp,par.nsepv,sepv,par.sbound,par.mxh1,par.mxh2,par.mxh3,par.nbts,par.bseed,par.wfib,par.cntid,logff,sk1,ll1]
                 args = [nt,npt,tab[par.cra].data,tab[par.cdec].data,dc,tab[par.cwei].data,x,y,z,npt1,dc1,tab1[par.cwei1].data,x1,y1,z1,par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,par.nbts,par.bseed,par.wfib,par.cntid,logff,sk1,ll1]
                 tt   = cff.mod.s_Cb_wg(*args)     # weighted counting
         else:              # Counting Data only
@@ -3260,7 +3096,7 @@ def pairs_cross(par, wunit, logff, tab, x, y, z, tab1, x1, y1, z1, sk1, ll1, dc=
                 args = [nt,npt,tab[par.cra].data,tab[par.cdec].data,dc,tab[par.cwei].data,x,y,z,npt1,dc1,tab1[par.cwei1].data,x1,y1,z1,par.nseps,seps,par.sbound,par.mxh1,par.mxh2,par.mxh3,par.wfib,par.cntid,logff,sk1,ll1]
                 tt   = cff.mod.s_C_wg(*args)      # weighted counting
 
-    if par.kind in ('accf','thC'):  ############  Angular Space  ##############
+    if par.kind in ('thC'):  ############  Angular Space  ############## 'accf'
         sept= makebins(par.nsept, par.septmin, par.dsept, par.logsept)[0]
         if par.doboot:     # Counting Data + Boostrap
             if (par.wfib==False and wunit):
@@ -3395,7 +3231,7 @@ def rppi_A(tab, par, nthreads=-1, write=True, plot=False, **kwargs):
     # Convert ra,dec,z to spherical coords ------------------------------------
     x,y,z = radec2xyz(tab[cra].data*np.pi/180., tab[cdec].data*np.pi/180.)
 
-    # Find out if all weights are 1, in order to use slightly faster counting functions
+    # Find out if all weights are 1.0 to later call slighly faster functions
     wunit  = (tab[cwei].data==1.0).all()
     
     #==========================================================================
@@ -3572,7 +3408,7 @@ def rppi_C(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     x, y, z = radec2xyz(tab[cra].data*np.pi/180., tab[cdec].data*np.pi/180.)
     x1, y1, z1 = radec2xyz(tab1[cra1].data*np.pi/180., tab1[cdec1].data*np.pi/180.)
 
-    # Find out if all weights are 1., in order to use slightly faster counting functions
+    # Find out if all weights are 1.0 to later call slighly faster functions
     wunit  = (tab[cwei].data==1).all()
     wunit1 = (tab1[cwei1].data==1).all()
     wunit_dr = wunit and wunit1
@@ -3773,7 +3609,7 @@ def pcf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     x, y, z = radec2xyz(tab[cra].data*np.pi/180., tab[cdec].data*np.pi/180.)
     x1, y1, z1 = radec2xyz(tab1[cra1].data*np.pi/180., tab1[cdec1].data*np.pi/180.)
 
-    # If all weights are 1.0, fcall_xx functions can use slighly faster versions 
+    # Find out if all weights are 1.0 to later call slighly faster functions
     wunit  = (tab[cwei].data==1).all()
     wunit1 = (tab1[cwei1].data==1).all()
     wunit_dr = wunit and wunit1
@@ -4016,7 +3852,7 @@ def pccf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
     x1, y1, z1 = radec2xyz(tab1[cra1].data*np.pi/180., tab1[cdec1].data*np.pi/180.)
     x2, y2, z2 = radec2xyz(tab2[cra2].data*np.pi/180., tab2[cdec2].data*np.pi/180.)
 
-    # If all weights are 1.0, fcall_xx functions will use slightly faster versions
+    # Find out if all weights are 1.0 to later call slighly faster functions
     wunit  = (tab[cwei].data==1).all()
     wunit1 = (tab1[cwei1].data==1).all()
     wunit2 = (tab2[cwei2].data==1).all()
@@ -4194,7 +4030,7 @@ def s_A(tab, par, nthreads=-1, write=True, para=False, plot=False, **kwargs):
     # Convert ra,dec,z to spherical coords ------------------------------------
     x, y, z = radec2xyz(tab[cra].data*np.pi/180., tab[cdec].data*np.pi/180.)
 
-    # Find out if all weights are 1, in order to use slightly faster counting functions
+    # Find out if all weights are 1.0 to later call slighly faster functions
     wunit  = (tab[cwei].data==1.0).all()
 
     #==========================================================================
@@ -4307,7 +4143,7 @@ def s_C(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
     nt  = set_threads(nthreads)
     
     # Log calling information  ------------------------------------------------
-    logcallinfo(log, par, npts=[npt])
+    logcallinfo(log, par, npts=[npt,npt1])
 
     # Create bins in redshift space -------------------------------------------
     seps, sepsout = makebins(par.nseps, par.sepsmin, par.dseps, par.logseps)
@@ -4319,11 +4155,11 @@ def s_C(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
     # Get comoving distances --------------------------------------------------
     if par.calcdist:
         tstart = time.time()
-        dc     = comdis(tab[cred], par, nt)
+        dc     = comdis(tab[cred].data, par, nt)
         tend   = time.time()
         log.info('Comov_dist_tab compute time (s)'.ljust(lj)+' : {:0.3f}'.format(tend-tstart))
         tstart = time.time()
-        dc1    = comdis(tab1[cred1], par, nt)
+        dc1    = comdis(tab1[cred1].data, par, nt)
         tend   = time.time()
         log.info('Comov_dist_tab1 compute time (s)'.ljust(lj)+' : {:0.3f}'.format(tend-tstart))
     else:
@@ -4369,7 +4205,7 @@ def s_C(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
     x, y, z    = radec2xyz(tab[cra].data*np.pi/180., tab[cdec].data*np.pi/180.)
     x1, y1, z1 = radec2xyz(tab1[cra1].data*np.pi/180., tab1[cdec1].data*np.pi/180.)
 
-    # If all weights are 1.0, fcall_xx functions will use slightly faster versions
+    # Find out if all weights are 1.0 to later call slighly faster functions
     wunit  = (tab[cwei].data==1).all()
     wunit1 = (tab1[cwei1].data==1).all()
     wunit_dr = wunit and wunit1
@@ -4385,7 +4221,6 @@ def s_C(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
     tend   = time.time()
     logtimming(log, par.cntid, tend-tstart)
     tacc = (tend-tstart)
-
 
 #    dv.push(dict(npt=npt, ra=tab[cra].data, dec=tab[cdec].data, dc=dc, wei=tab[cwei].data,  x=x, y=y, z=z, 
 #                 npt1=npt1, ra1=tab1[cra1].data, dec1=tab1[cdec1].data, dc1=dc1, wei1=tab1[cwei1].data,  x1=x1, y1=y1, z1=z1, 
@@ -4577,7 +4412,7 @@ def rcf(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
     x, y, z = radec2xyz(tab[cra].data*np.pi/180., tab[cdec].data*np.pi/180.)
     x1, y1, z1 = radec2xyz(tab1[cra1].data*np.pi/180., tab1[cdec1].data*np.pi/180.)
 
-    # If all weights are 1.0, fcall_xx functions can use slighly faster versions 
+    # Find out if all weights are 1.0 to later call slighly faster functions
     wunit  = (tab[cwei].data==1).all()
     wunit1 = (tab1[cwei1].data==1).all()
     wunit_dr = wunit and wunit1
@@ -4613,81 +4448,14 @@ def rcf(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
         tacc = tacc + (tend-tstart)
     #=========================  END PAIR COUNTS  ==============================
     #==========================================================================
-
     
-#    if par.para is True:   # Start parallel calculation  ----------------------
-#        ixseq = list(range(1,mxh1+1))
-#        log.info('====  Counting ' + par_dd.cntid + ' pairs  =====')
-#        dv.push(dict(npt=npt, ra=tab[cra].data, dec=tab[cdec].data, dc=dc, wei=tab[cwei].data,
-#                     x=x, y=y, z=z, seps=seps, sk=sk, ll=ll, allw=allw, par=par_dd), block=True)
-#        tstart = time.time()
-#        tt1 = v.map_async(fcall_sA, ixseq)   #if rc.dbmode: do something different?
-#        watch(tt1, rc, tolog=True, log=log)
-#        tend = time.time()
-#        logtimming(log,'DD',tend-tstart)
-#        tacc = (tend-tstart)
-#
-#        if par.estimator not in ('DP'):
-#            log.info('====  Counting ' + par_rr.cntid + ' pairs  =====')
-#            dv.push(dict(npt=npt1, ra=tab1[cra1].data, dec=tab1[cdec1].data, dc=dc1, wei=tab1[cwei1].data,
-#                         x=x1, y=y1, z=z1, seps=seps, sk=sk1, ll=ll1, allw=allw1, par=par_rr), block=True)
-#            tstart = time.time()
-#            tt2 = v.map_async(fcall_sA, ixseq)   #if rc.dbmode: do something different?
-#            watch(tt2, rc, tolog=True, log=log)
-#            tend = time.time()
-#            logtimming(log,'RR',tend-tstart)
-#            tacc = tacc + (tend-tstart)
-#        
-#        if par.estimator in ('HAM','DP','LS'):
-#            log.info('====  Counting ' + par_dr.cntid + ' pairs  =====')
-#            dv.push(dict(npt=npt1, ra=tab1[cra1].data, dec=tab1[cdec1].data, dc=dc1, wei=tab1[cwei1].data,  x=x1, y=y1, z=z1, 
-#                         npt1=npt, ra1=tab[cra].data, dec1=tab[cdec].data, dc1=dc, wei1=tab[cwei].data, x1=x, y1=y, z1=z, 
-#                         seps=seps, sk1=sk, ll1=ll, allw=allw_dr, par=par_dr), block=True)
-#            tstart = time.time()
-#            tt3 = v.map_async(fcall_sC, ixseq)
-#            watch(tt3, rc, tolog=True, log=log)
-#            tend = time.time()
-#            logtimming(log,'DR',tend-tstart)
-#            tacc = tacc + (tend-tstart)
-#    else:                # Start serial calculation  --------------------------
-#        log.info('Check ' + par.outfn + '.fortran.log' + ' for progress updates...')
-#        log.info('====  Counting ' + par_dd.cntid + ' pairs  =====')
-#        tstart = time.time()
-#        tt1 = fcall_sA_serial(npt, tab[cra].data, tab[cdec].data, dc, tab[cwei].data, 
-#                              x, y, z, seps, sk, ll, allw, par_dd)
-#        tend = time.time()
-#        logtimming(log,'DD',tend-tstart)
-#        tacc = (tend-tstart)
-#        
-#        if par.estimator not in ('DP'):
-#            log.info('====  Counting ' + par_rr.cntid + ' pairs  =====')
-#            tstart = time.time()
-#            tt2 = fcall_sA_serial(npt1, tab1[cra1].data, tab1[cdec1].data, dc1, tab1[cwei1].data, 
-#                                  x1, y1, z1, seps, sk1, ll1, allw1, par_rr)
-#            tend = time.time()
-#            logtimming(log,'RR',tend-tstart)
-#            tacc = tacc + (tend-tstart)
-#
-#        if par.estimator in ('HAM','DP','LS'):
-#            log.info('====  Counting ' + par_dr.cntid + ' pairs  =====')
-#            tstart = time.time()
-#            # How it is faster ? Data-Random or Random-Data ???
-#            # Try Random-Data order
-#            tt3 = fcall_sC_serial(npt1, tab1[cra1].data, tab1[cdec1].data, dc1, tab1[cwei1].data, x1, y1, z1, 
-#                                  npt, tab[cra], tab[cdec].data, dc, tab[cwei].data, x, y, z, 
-#                                  seps, sk, ll, allw_dr, par_dr)
-#            # Try Data-Random order
-#            #tt3 = fcall_sC_serial(npt, tab[cra], tab[cdec].data, dc, tab[cwei].data, x, y, z, 
-#            #                      npt1, tab1[cra1].data, tab1[cdec1].data, dc1, tab1[cwei1].data, x1, y1, z1, 
-#            #                      seps, sk1, ll1, allw_dr, par_dr)
-#            tend = time.time()
-#            logtimming(log,'DR',tend-tstart)
-#            tacc = tacc + (tend-tstart)
-
-#    # Aggregate counts  -------------------------------------------------------
-#    dd,bdd = aggcountsb(tt1,par)
-#    rr     = aggcounts(tt2,par) if par.estimator not in ('DP') else np.zeros(par.nseps)
-#    dr     = aggcounts(tt3,par) if par.estimator in ('HAM','DP','LS') else np.zeros(par.nseps)
+#    tt1 = fcall_sA_serial(npt, tab[cra].data, tab[cdec].data, dc, tab[cwei].data, 
+#                          x, y, z, seps, sk, ll, allw, par_dd)
+#    tt2 = fcall_sA_serial(npt1, tab1[cra1].data, tab1[cdec1].data, dc1, tab1[cwei1].data, 
+#                          x1, y1, z1, seps, sk1, ll1, allw1, par_rr)
+#    tt3 = fcall_sC_serial(npt1, tab1[cra1].data, tab1[cdec1].data, dc1, tab1[cwei1].data, x1, y1, z1, 
+#                          npt, tab[cra], tab[cdec].data, dc, tab[cwei].data, x, y, z, 
+#                          seps, sk, ll, allw_dr, par_dr)
 
     # Tidy ouput counts  ------------------------------------------------------
     dd,bdd = tidy_counts(tt1, par_dd)
@@ -4696,7 +4464,6 @@ def rcf(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
 
     # Compute projected correlation function estimate  ------------------------
     (xis, xiserr) = tpcf(npt, npt1, dd, bdd, rr, dr, estimator=par.estimator)
-    #sl, sm, sr = sepsout
 
     # Do plot if desired  -----------------------------------------------------
     if plot:
@@ -4731,7 +4498,7 @@ def rcf(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
 
 
 # =============================================================================
-def rccf(tab, tab1, tab2, par, write=True, para=False, plot=False):
+def rccf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
     """
     Given three astropy tables corresponding to **data**, **random**, and
     **cross** samples, this routine calculates the **two-point redshift space
@@ -4755,17 +4522,19 @@ def rccf(tab, tab1, tab2, par, write=True, para=False, plot=False):
     par : Munch dictionary 
         Input parameters. See :ref:`indic-rccf` for a detailed description
 
+    nthreads : integer. Default=-1
+        Number of threads to use. Default to -1, which means all available cpu cores
+
     write : bool. Default=True
        * True : write several output files for CD/CR counts, correlations, etc.
        * False : do not write any output files (except for logs, which are always saved)
 
-    para : bool. Default=False
-       * True : run in parallel over all available ipyparallel engines
-       * False : run serially. No need for any ipyparallel cluster running
-
     plot : bool. Default=False
        * True : generate the CF plot on screen (and saved to disk when ``write=True``)
        * False : do not generate any plots
+
+    kwargs : dict
+        Extra keywords passed to :func:`gundam.plotcf`
        
        
     .. rubric :: Returns
@@ -4788,15 +4557,17 @@ def rccf(tab, tab1, tab2, par, write=True, para=False, plot=False):
         par = gun.packpars(kind='pccf',outfn='redgal_qso')      # generate default parameters
         cnt = gun.rccf(gals, rans, qsos, par, write=True )      # get rcf
     """
+    lj = 27  # nr of characters for left justification of some status msgs
+    
     # Initialize logs, check if par has the right kind, etc. Common to all CF functions
     t0 = time.time()
-    (par,log,logf,logff,runspyder) = initialize('rccf', par, para=para, write=write, plot=plot)
+    (par,log,logf,logff,runspyder,t0) = initialize('rccf', par, nthreads=nthreads, write=write, plot=plot)
 
-    # Find number of particles in input tables  -------------------------------
+    # Find number of particles in input tables and set nr of threads  ---------
     npt, npt1, npt2 = len(tab), len(tab1), len(tab2)
+    nt = set_threads(nthreads)
     
     # Log calling information  ------------------------------------------------
-    log.info(time.strftime('START !  %x  %H:%M:%S'))
     logcallinfo(log, par, npts=[npt,npt1,npt2])
     
     # Create bins in redshift space -------------------------------------------
@@ -4807,37 +4578,18 @@ def rccf(tab, tab1, tab2, par, write=True, para=False, plot=False):
     cra1, cdec1, cred1, cwei1 = par.cra1, par.cdec1, par.cred1, par.cwei1
     cra2, cdec2, cred2, cwei2 = par.cra2, par.cdec2, par.cred2, par.cwei2
 
-    # Initialize the remote client and set up the parallel machinery  ---------
-    cosmo  = LambdaCDM(H0=par.h0,Om0=par.omegam,Ode0=par.omegal)
-    if par.para:
-        rc,dv,v = init()
-        dv.push(dict(cosmo=cosmo),block=True)
-        # Re-define comoving distance in parallel  ----------------------------
-        @dv.parallel(block=True)      #  (1) @parallel   (2) @interactive
-        def comdis(z):
-            # Wrapper for astropy's comoving_distance() method, decorated to run in
-            # parallel as a local function. Since we need dv, this must go after 
-            # init() and inside pcf(), pccf(), etc.
-            return cosmo.comoving_distance(z).value
-    else:
-        def comdis(z):
-            # Wrapper for astropy's comoving_distance() method
-            return cosmo.comoving_distance(z).value
-
-    lj = 27  # nr of characters for left justification of some status msgs
-
     # Get comoving distances --------------------------------------------------
     if par.calcdist:
         tstart = time.time()
-        dc     = comdis(tab[cred])
+        dc     = comdis(tab[cred].data, par, nt)
         tend   = time.time()
         log.info('Comov_dist_tab compute time (s)'.ljust(lj)+' : {:0.3f}'.format(tend-tstart))
         tstart = time.time()
-        dc1    = comdis(tab1[cred1])
+        dc1    = comdis(tab1[cred1].data, par, nt)
         tend   = time.time()
         log.info('Comov_dist_tab1 compute time (s)'.ljust(lj)+' : {:0.3f}'.format(tend-tstart))
         tstart = time.time()
-        dc2    = comdis(tab2[cred2])
+        dc2    = comdis(tab2[cred2].data, par, nt)
         tend   = time.time()
         log.info('Comov_dist_tab2 compute time (s)'.ljust(lj)+' : {:0.3f}'.format(tend-tstart))
     else:
@@ -4889,17 +4641,14 @@ def rccf(tab, tab1, tab2, par, write=True, para=False, plot=False):
     log.info('SK grid size [dec,ra,dcom]'.ljust(lj)+' : ' + str([par.mxh1,par.mxh2,par.mxh3]))
 
     # Sort table/s according to some order  -----------------------------------
-    tstart = time.time()
-    sidx = pixsort(tab,[cra, cdec, cred],par)
-    tab  = tab[sidx]
-    dc   = dc[sidx]
-    sidx1 = pixsort(tab1,[cra1, cdec1, cred1],par)
-    tab1  = tab1[sidx1]
-    dc1   = dc1[sidx1]
-    sidx2 = pixsort(tab2,[cra2, cdec2, cred2],par)
-    tab2  = tab2[sidx2]
-    dc2   = dc2[sidx2]
-    tend = time.time()
+    tstart    = time.time()
+    sidx      = pixsort(tab,[cra, cdec, cred], par)  #par or par_cd, par_cr ??? XXXXX
+    tab, dc   = tab[sidx], dc[sidx]
+    sidx1     = pixsort(tab1,[cra1, cdec1, cred1], par)
+    tab1, dc1 = tab1[sidx1], dc1[sidx1]
+    sidx2     = pixsort(tab2,[cra2, cdec2, cred2], par)
+    tab2, dc2 = tab2[sidx2], dc2[sidx2]
+    tend      = time.time()
     log.info('Pixsort time (s)'.ljust(lj)+' : {:0.3f}'.format(tend-tstart))
     
     # Create SK and LL tables  -----------------------------------------------
@@ -4914,103 +4663,77 @@ def rccf(tab, tab1, tab2, par, write=True, para=False, plot=False):
     x1, y1, z1 = radec2xyz(tab1[cra1].data*np.pi/180., tab1[cdec1].data*np.pi/180.)
     x2, y2, z2 = radec2xyz(tab2[cra2].data*np.pi/180., tab2[cdec2].data*np.pi/180.)
 
-    # If all weights are 1.0, fcall_xx functions will use slightly faster versions
-    allw  = (tab[cwei].data==1).all()
-    allw1 = (tab1[cwei1].data==1).all()
-    allw2 = (tab2[cwei2].data==1).all()
-    allw_cd = allw2 and allw
-    allw_cr = allw2 and allw1
+    # Find out if all weights are 1.0 to later call slighly faster functions
+    wunit  = (tab[cwei].data==1).all()
+    wunit1 = (tab1[cwei1].data==1).all()
+    wunit2 = (tab2[cwei2].data==1).all()
+    wunit_cd = wunit2 and wunit
+    wunit_cr = wunit2 and wunit1
+
 
     #==========================================================================
     #==========================   COUNT PAIRS   ===============================
-    if par.para is True:      # Start parallel calculation  -------------------
-        ixseq = list(range(1,mxh1+1))
-        log.info('====  Counting ' + par_cd.cntid + ' pairs  =====')
-        dv.push(dict(npt=npt2, ra=tab2[cra2].data, dec=tab2[cdec2].data, dc=dc2, wei=tab2[cwei2].data,  x=x2, y=y2, z=z2, 
-                     npt1=npt, ra1=tab[cra].data, dec1=tab[cdec].data, dc1=dc, wei1=tab[cwei].data, x1=x, y1=y, z1=z, 
-                     seps=seps, sk1=sk, ll1=ll, allw=allw_cd, par=par_cd), block=True)
-        tstart = time.time()
-        tt1 = v.map_async(fcall_sC, ixseq)   #if rc.dbmode: do something different?
-        watch(tt1, rc, tolog=True, log=log)
-        tend = time.time()
-        logtimming(log,'CD',tend-tstart)
-        tacc = (tend-tstart)
+    log.info('====  Counting ' + par_cd.cntid + ' pairs in ' + np.str(par_cd.mxh1) + ' DEC strips  =====')
+    if runspyder : log.info('      [for progress updates check ' + logff + ']')
+    tstart = time.time()
+    tt1    = pairs_cross(par_cd, wunit_cd, logff, tab2, x2, y2, z2, 
+                         tab, x, y, z, sk, ll,  dc=dc2, dc1=dc)
+    tend   = time.time()
+    logtimming(log,par_cd.cntid,tend-tstart)
+    tacc = tend-tstart
 
-        log.info('====  Counting ' + par_cr.cntid + ' pairs  =====')
-        dv.push(dict(npt=npt2, ra=tab2[cra2].data, dec=tab2[cdec2].data, dc=dc2, wei=tab2[cwei2].data,  x=x2, y=y2, z=z2, 
-                     npt1=npt1, ra1=tab1[cra1].data, dec1=tab1[cdec1].data, dc1=dc1, wei1=tab1[cwei1].data, x1=x1, y1=y1, z1=z1, 
-                     seps=seps, sk1=sk1, ll1=ll1, allw=allw_cr, par=par_cr), block=True)
-        tstart = time.time()
-        tt2 = v.map_async(fcall_sC, ixseq)   #if rc.dbmode: do something different?
-        watch(tt2, rc, tolog=True, log=log)
-        tend = time.time()
-        logtimming(log,'CR',tend-tstart)
-        tacc = tacc + (tend-tstart)
-
-    else:                    # Start serial calculation  ----------------------
-        log.info('Check ' + par.outfn + '.fortran.log' + ' for progress updates...')
-        log.info('====  Counting ' + par_cd.cntid + ' pairs  =====')
-        tstart = time.time()
-        tt1 = fcall_sC_serial(npt2, tab2[cra2].data, tab2[cdec2].data, dc2, tab2[cwei2].data, x2, y2, z2, 
-                              npt, tab[cra], tab[cdec].data, dc, tab[cwei].data, x, y, z, 
-                              seps, sk, ll, allw_cd, par_cd)
-        tend = time.time()
-        logtimming(log,'CD',tend-tstart)
-        tacc = (tend-tstart)
-
-        log.info('====  Counting ' + par_cr.cntid + ' pairs  =====')
-        tstart = time.time()
-        tt2 = fcall_sC_serial(npt2, tab2[cra2].data, tab2[cdec2].data, dc2, tab2[cwei2].data, x2, y2, z2, 
-                              npt1, tab1[cra1], tab1[cdec1].data, dc1, tab1[cwei1].data, x1, y1, z1, 
-                              seps, sk1, ll1, allw_cr, par_cr)
-        tend = time.time()
-        logtimming(log,'CR',tend-tstart)
-        tacc = tacc + (tend-tstart)
+    log.info('====  Counting ' + par_cr.cntid + ' pairs in ' + np.str(par_cr.mxh1) + ' DEC strips  =====')
+    if runspyder : log.info('      [for progress updates check ' + logff + ']')
+    tstart = time.time()
+    tt2    = pairs_cross(par_cr, wunit_cr, logff, tab2, x2, y2, z2, 
+                         tab1, x1, y1, z1, sk1, ll1,  dc=dc2, dc1=dc1)
+    tend   = time.time()
+    logtimming(log,par_cd.cntid,tend-tstart)
+    tacc = tacc + (tend-tstart)
     #=========================  END PAIR COUNTS  ==============================
     #==========================================================================
+#    tt1 = fcall_sC_serial(npt2, tab2[cra2].data, tab2[cdec2].data, dc2, tab2[cwei2].data, x2, y2, z2, 
+#                          npt, tab[cra], tab[cdec].data, dc, tab[cwei].data, x, y, z, 
+#                          seps, sk, ll, allw_cd, par_cd)
+#
+#    tt2 = fcall_sC_serial(npt2, tab2[cra2].data, tab2[cdec2].data, dc2, tab2[cwei2].data, x2, y2, z2, 
+#                          npt1, tab1[cra1], tab1[cdec1].data, dc1, tab1[cwei1].data, x1, y1, z1, 
+#                          seps, sk1, ll1, allw_cr, par_cr)
 
-    # Aggregate counts  -------------------------------------------------------
-
-    cd,bcd = aggcountsb(tt1,par)
-    cr     = aggcounts(tt2,par)
+    # Tidy ouput counts  ------------------------------------------------------
+    cd,bcd = tidy_counts(tt1,par_cd)
+    cr,dum = tidy_counts(tt2,par_cr)
 
     # Compute projected correlation function estimate  ------------------------
-    (xis,xiserr) = tpccf(npt,npt1,cd,bcd,cr,estimator=par.estimator)
-    sl, sm, sr = sepsout
-
-    # Write ascii counts, correlations and parameters  ------------------------
-    if write:
-        writeasc_cf(sl,sm,sr,xis,xiserr,par)
-        writeasc_counts(sl,sm,sr,cd,par,cntid='cd')
-        writeasc_counts(sl,sm,sr,cr,par,cntid='cr')
-        # Write log entry now just for order  -------
-        msg = '> COUNTS object saved in  : ' + par.outfn + '.cnt'
-        log.info(msg)
+    (xis, xiserr) = tpccf(npt, npt1, cd, bcd, cr, estimator=par.estimator)
 
     # Do plot if desired  -----------------------------------------------------
     if plot:
         try:
             #plt.figure(1)
-            plt.figure('RCF plot 1')
-            plotcf(sm,xis,xiserr,fac=1.,write=write,par=par)
+            plt.figure('RCCF plot 1')
+            plotcf(sepsout[1], xis, xiserr, fac=1., write=write, par=par, **kwargs)
         except ValueError:
             print('Warning: there is a problem with the plot !!!') 
 
     # Build ouput  ------------------------------------------------------------
-    counts = buildoutput(par,npts=[npt,npt1,npt2],binslmr=sepsout,cd=cd,cr=cr,
-                         bootc=bcd,cf=xis,cferr=xiserr)
+    counts = buildoutput(par, npts=[npt,npt1,npt2], binslmr=sepsout, cd=cd, cr=cr,
+                         bootc=bcd, cf=xis, cferr=xiserr)
 
-    # Save PARS and COUNTS  ---------------------------------------------------
-    if write: savepars(par)
-    if write: savecounts(counts)
+    # Finalize  ---------------------------------------------------------------
+    finalize(log,logf,logff,tacc,t0,counts)
+    
+    # Write ascii counts, correlations and parameters  ------------------------
+    if write:
+        writeasc_cf(*sepsout, xis, xiserr, par)
+        writeasc_counts(*sepsout, cd, par,cntid='cd')
+        writeasc_counts(*sepsout, cr, par,cntid='cr')
+        savepars(par)
+        savecounts(counts)
 
-    # Finalize and close log  -------------------------------------------------
-    t1 = time.time()
-    finalize(log,logf,logff,tacc,t1-t0,counts)
+    # Close log  --------------------------------------------------------------
     closelog(log,runspyder=runspyder)
-    if par.para: rc.close()   # Opening many Clients without closing their sockets
-                              # can lead to a "too many files opened" error
-
+    
     return counts
 
 
@@ -5116,7 +4839,7 @@ def th_A(tab, par, nthreads=-1, write=True, plot=False , **kwargs):
     # Convert ra,dec,z to spherical coords ------------
     x, y, z = radec2xyz(tab[cra].data*np.pi/180., tab[cdec].data*np.pi/180.)
 
-    # If all weights are 1.0, fcall_xx functions can use slighly faster versions 
+    # Find out if all weights are 1.0 to later call slighly faster functions
     wunit  = (tab[cwei].data==1).all()
          
     #==========================================================================
@@ -5272,7 +4995,7 @@ def th_C(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     x, y, z = radec2xyz(tab[cra].data*np.pi/180., tab[cdec].data*np.pi/180.)
     x1, y1, z1 = radec2xyz(tab1[cra1].data*np.pi/180., tab1[cdec1].data*np.pi/180.)
 
-    # If all weights are 1.0, fcall_xx functions will use slightly faster versions
+    # Find out if all weights are 1.0 to later call slighly faster functions
     wunit  = (tab[cwei].data==1).all()
     wunit1 = (tab1[cwei1].data==1).all()
     wunit_dr = wunit and wunit1
@@ -5454,7 +5177,7 @@ def acf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     x, y, z = radec2xyz(tab[cra].data*np.pi/180., tab[cdec].data*np.pi/180.)
     x1, y1, z1 = radec2xyz(tab1[cra1].data*np.pi/180., tab1[cdec1].data*np.pi/180.)
 
-    # If all weights are 1.0, fcall_xx functions will use slighly faster versions
+    # Find out if all weights are 1.0 to later call slighly faster functions
     wunit  = (tab[cwei].data==1).all()
     wunit1 = (tab1[cwei1].data==1).all()
     wunit_dr = wunit and wunit1
@@ -5675,7 +5398,7 @@ def accf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
     x1, y1, z1 = radec2xyz(tab1[cra1].data*np.pi/180., tab1[cdec1].data*np.pi/180.)
     x2, y2, z2 = radec2xyz(tab2[cra2].data*np.pi/180., tab2[cdec2].data*np.pi/180.)
 
-    # If all weights are 1.0, fcall_xx functions will use slightly faster versions
+    # Find out if all weights are 1.0 to later call slighly faster functions
     wunit  = (tab[cwei].data==1).all()
     wunit1 = (tab1[cwei1].data==1).all()
     wunit2 = (tab2[cwei2].data==1).all()
@@ -5915,7 +5638,10 @@ if __name__ == "__main__":
     if testsuite is None:
         print('Basic usage: ')
         print('       import gundam as gun')
-        print('       # Read data and randoms, and create parameters object')
-        print('       # Calculate correlation, e.g. a projected correlation function')
-        print('       cnt = gun.pcf(data, randoms, par,...)')
+        print('       # Read data, randoms, and create default parameters for a PCF')
+        print('       gals = Table.read("galaxies.fits")')
+        print('       rans = Table.read("randoms.fits")')
+        print('       par  = gun.packpars(kind="pcf")')
+        print('       # Calculate the correlation')
+        print('       cnt = gun.pcf(gals, rans, par)')
    

@@ -437,7 +437,7 @@ write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC stri
 !$omp parallel do reduction(+:aapv) default(shared) &
 !$omp& private(iq1,iq2,iq3,jq1,jq2,jq3,rcl,stm2,dltdec,jq1m,jq1min) &
 !$omp& private(dltra,jq2m,jq2min,jq2max,jq2t,j,i,xi,yi,zi,dci,rv,rp2,ii,jj) &
-!$omp& schedule(guided) if(nthr>1)
+!$omp& schedule(dynamic) if(nthr>1)
 do iq1=1,nc1
    !$omp critical
    write(*,fmt="(i4)",advance='no') iq1                             ! for screen
@@ -2080,7 +2080,15 @@ do iq1=1,nc1
                               aas(nseps-1) = aas(nseps-1) + 1.0d0
                               goto 74
                            endif
-                           do ii=nseps-2,1,-1
+                           if(r2>seps2(nseps-2)) then
+                              aas(nseps-2) = aas(nseps-2) + 1.0d0
+                              goto 74
+                           endif
+                           if(r2>seps2(nseps-3)) then
+                              aas(nseps-3) = aas(nseps-3) + 1.0d0
+                              goto 74
+                           endif
+                           do ii=nseps-4,1,-1
                               if(r2>seps2(ii)) then
                                  aas(ii) = aas(ii) + 1.0d0
                                  goto 74
@@ -2271,7 +2279,15 @@ do iq1=1,nc1
                               aas(nseps-1) = aas(nseps-1) + wpp
                               goto 74
                            endif
-                           do ii=nseps-2,1,-1
+                           if(r2>seps2(nseps-2)) then
+                              aas(nseps-2) = aas(nseps-2) + wpp
+                              goto 74
+                           endif
+                           if(r2>seps2(nseps-3)) then
+                              aas(nseps-3) = aas(nseps-3) + wpp
+                              goto 74
+                           endif
+                           do ii=nseps-4,1,-1
                               if(r2>seps2(ii)) then
                                  aas(ii) = aas(ii) + wpp
                                  goto 74
@@ -2465,7 +2481,17 @@ do iq1=1,nc1
                               baas(:,nseps-1) = baas(:,nseps-1) + wbts(:,i)*wbts(:,j)
                               goto 74
                            endif
-                           do ii=nseps-2,1,-1
+                           if(r2>seps2(nseps-2)) then
+                              aas(nseps-2) = aas(nseps-2) + 1.0d0
+                              baas(:,nseps-2) = baas(:,nseps-2) + wbts(:,i)*wbts(:,j)
+                              goto 74
+                           endif
+                           if(r2>seps2(nseps-3)) then
+                              aas(nseps-3) = aas(nseps-3) + 1.0d0
+                              baas(:,nseps-3) = baas(:,nseps-3) + wbts(:,i)*wbts(:,j)
+                              goto 74
+                           endif
+                           do ii=nseps-4,1,-1
                               if(r2>seps2(ii)) then
                                  aas(ii) = aas(ii) + 1.0d0
                                  baas(:,ii) = baas(:,ii) + wbts(:,i)*wbts(:,j)
@@ -2669,7 +2695,17 @@ do iq1=1,nc1
                               baas(:,nseps-1) = baas(:,nseps-1) + wpp*wbts(:,i)*wbts(:,j)
                               goto 74
                            endif
-                           do ii=nseps-2,1,-1
+                           if(r2>seps2(nseps-2)) then
+                              aas(nseps-2) = aas(nseps-2) + wpp
+                              baas(:,nseps-2) = baas(:,nseps-2) + wpp*wbts(:,i)*wbts(:,j)
+                              goto 74
+                           endif
+                           if(r2>seps2(nseps-3)) then
+                              aas(nseps-3) = aas(nseps-3) + wpp
+                              baas(:,nseps-3) = baas(:,nseps-3) + wpp*wbts(:,i)*wbts(:,j)
+                              goto 74
+                           endif
+                           do ii=nseps-4,1,-1
                               if(r2>seps2(ii)) then
                                  aas(ii) = aas(ii) + wpp
                                  baas(:,ii) = baas(:,ii) + wbts(:,i)*wbts(:,j)
@@ -2855,7 +2891,19 @@ do i=1,npt   !---- Loop over ith particles ----
                      cds(nseps) = cds(nseps) + 1.0d0
                      goto 70
                   endif
-                  do ii=nseps-1,1,-1
+                  if(r2>seps2(nseps-1)) then
+                     cds(nseps-1) = cds(nseps-1) + 1.0d0
+                     goto 70
+                  endif
+                  if(r2>seps2(nseps-2)) then
+                     cds(nseps-2) = cds(nseps-2) + 1.0d0
+                     goto 70
+                  endif
+                  if(r2>seps2(nseps-3)) then
+                     cds(nseps-3) = cds(nseps-3) + 1.0d0
+                     goto 70
+                  endif
+                  do ii=nseps-4,1,-1
                      if(r2>seps2(ii)) then
                         cds(ii) = cds(ii) + 1.0d0
                         goto 70
@@ -3045,7 +3093,19 @@ do i=1,npt   !---- Loop over ith particles ----
                      cds(nseps) = cds(nseps) + wpp
                      goto 70
                   endif
-                  do ii=nseps-1,1,-1
+                  if(r2>seps2(nseps-1)) then
+                     cds(nseps-1) = cds(nseps-1) + wpp
+                     goto 70
+                  endif
+                  if(r2>seps2(nseps-2)) then
+                     cds(nseps-2) = cds(nseps-2) + wpp
+                     goto 70
+                  endif
+                  if(r2>seps2(nseps-3)) then
+                     cds(nseps-3) = cds(nseps-3) + wpp
+                     goto 70
+                  endif
+                  do ii=nseps-4,1,-1
                      if(r2>seps2(ii)) then
                         cds(ii) = cds(ii) + wpp
                         goto 70
@@ -3237,7 +3297,22 @@ do i=1,npt   !---- Loop over ith particles ----
                      bcds(:,nseps) = bcds(:,nseps) + wbts(:,i)*wbts1(:,j)
                      goto 70
                   endif
-                  do ii=nseps-1,1,-1
+                  if(r2>seps2(nseps-1)) then
+                     cds(nseps-1) = cds(nseps-1) + 1.0d0
+                     bcds(:,nseps-1) = bcds(:,nseps-1) + wbts(:,i)*wbts1(:,j)
+                     goto 70
+                  endif
+                  if(r2>seps2(nseps-2)) then
+                     cds(nseps-2) = cds(nseps-2) + 1.0d0
+                     bcds(:,nseps-2) = bcds(:,nseps-2) + wbts(:,i)*wbts1(:,j)
+                     goto 70
+                  endif
+                  if(r2>seps2(nseps-3)) then
+                     cds(nseps-3) = cds(nseps-3) + 1.0d0
+                     bcds(:,nseps-3) = bcds(:,nseps-3) + wbts(:,i)*wbts1(:,j)
+                     goto 70
+                  endif
+                  do ii=nseps-4,1,-1
                      if(r2>seps2(ii)) then
                         cds(ii) = cds(ii) + 1.0d0
                         bcds(:,ii) = bcds(:,ii) + wbts(:,i)*wbts1(:,j)
@@ -3440,7 +3515,22 @@ do i=1,npt   !---- Loop over ith particles ----
                      bcds(:,nseps) = bcds(:,nseps) + wpp*wbts(:,i)*wbts1(:,j)
                      goto 70
                   endif
-                  do ii=nseps-1,1,-1
+                  if(r2>seps2(nseps-1)) then
+                     cds(nseps-1) = cds(nseps-1) + wpp
+                     bcds(:,nseps-1) = bcds(:,nseps-1) + wpp*wbts(:,i)*wbts1(:,j)
+                     goto 70
+                  endif
+                  if(r2>seps2(nseps-2)) then
+                     cds(nseps-2) = cds(nseps-2) + wpp
+                     bcds(:,nseps-2) = bcds(:,nseps-2) + wpp*wbts(:,i)*wbts1(:,j)
+                     goto 70
+                  endif
+                  if(r2>seps2(nseps-3)) then
+                     cds(nseps-3) = cds(nseps-3) + wpp
+                     bcds(:,nseps-3) = bcds(:,nseps-3) + wpp*wbts(:,i)*wbts1(:,j)
+                     goto 70
+                  endif
+                  do ii=nseps-4,1,-1
                      if(r2>seps2(ii)) then
                         cds(ii) = cds(ii) + wpp
                         bcds(:,ii) = bcds(:,ii) + wpp*wbts(:,i)*wbts1(:,j)

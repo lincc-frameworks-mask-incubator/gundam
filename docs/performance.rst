@@ -24,7 +24,13 @@ Now we compare with one of the fastest publicity available codes
 .. image:: bench_rppiA_plot1.png
     :scale: 60%
     :alt: DD(rp,pi) performance1
-    
+
+And now we compare the performance with *n* threads running in parallel
+
+.. image:: benchMP_plot1.png
+    :scale: 60%
+    :alt: DD(rp,pi) performance3
+
 The equipment employed for testing is based in a four core i7-3770K 3.5GHz CPU 
 (L1 cache: 32KB data + 32KB instruction, L2 cache: 256KB, L3 cache: 8MB shared)
 with 16GB RAM, running with OpenSuse Linux, GNU Fortran 6.1.1 compiler and Python 

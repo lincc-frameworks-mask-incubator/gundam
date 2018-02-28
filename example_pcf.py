@@ -10,10 +10,10 @@ galf   = './examples_data/DATA.fits'     # Galaxy sample
 ranf   = './examples_data/RAND.fits'     # Random sample
 outfn  = './examples_data/ex_pcf_01'     # Name for output files
 par = gun.packpars(kind='pcf', file=galf, file1=ranf, outfn=outfn)
-par.autogrid    = False       # Automatic SK grid size
-par.mxh1        = 60          # SK size in dec
-par.mxh2        = 240         # SK size in ra
-par.mxh3        = 24          # SK size in z
+par.autogrid    = True        # Automatic SK grid size
+par.mxh1        = 20          # SK size in dec
+par.mxh2        = 100         # SK size in ra
+par.mxh3        = 10          # SK size in z
 par.nsepp       = 28          # Number of bins of projected separation rp
 par.seppmin     = 0.02        # Minimum rp in Mpc/h
 par.dsepp       = 0.12        # Bin size of rp (in log space)

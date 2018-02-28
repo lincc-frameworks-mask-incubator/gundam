@@ -20,11 +20,9 @@ list algorithm. The parameter :code:`pxorder` controls the method to sort the
 pixels. Available options are:
 
 - **'natural'** |br|
-  Pixels are sorted in lexical order by three keys, DEC-RA-Z, in that order.
+  Pixels are sorted in lexical order by three keys, Z-DEC-RA, in that order.
   This is usually the fastest option as it more closely matches the mechanics
-  of the counting algorithm. The number of pixels are set to :code:`(mxh1,mxh2,10*mxh3)`,
-  where the factor of 10 creates a slighly more fine grained ordering along the 
-  redshift dimension
+  of the counting algorithm. The number of pixels are set to :code:`(mxh3,mxh1,mxh2)`
 
 - **'morton_dir'** |br|
   2D Morton-curve ordering using the RA-DEC values directly, i.e. no division
