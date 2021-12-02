@@ -32,10 +32,17 @@
   ! Contact Author
   !===============
   ! Emilio Donoso (edonoso@conicet.gov.ar)
+  !
+  ! NOTES FOR COMPILATION WITH MPI
+  ! 1. activate some anaconda environment
+  ! 2. module load gnu/10 openmpi/2.1.6
+  ! 3. f2py -c --f90exec=mpif90 --opt='-O3 -march=native -ftree-vectorize -fopenmp' -lgomp cflibfor.pyf cflibfor.f90
 
   
 module mod
 use omp_lib
+use mpi
+!include "mpif.h"
 real(kind=8) :: deg2rad = acos(-1.d0)/180.d0
 real(kind=8) :: rad2deg = 180.d0/acos(-1.d0)
 
@@ -232,6 +239,59 @@ real(kind=4) function wfiber(shth2)
                       (4.7734205d0*theta**(-0.47210907d0))
 end function wfiber
 
+subroutine finishMPI()
+integer       :: nproc,ierr
+
+!write(*,*) 'Finito called'
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+
+call mpi_barrier(mpi_comm_world,ierr)
+call mpi_finalize(ierr)
+end subroutine finishMPI
+
+subroutine r_nada(a,b,c,d)
+!===============================================================================
+! NAME
+!  skll3d()
+!
+! PURPOSE
+!  Construct a skip table (SK) and linked list (LL) for a set of particles with 
+!  (ra,dec,dcom) coordinates. 
+!  The SK table of size (mxh3,mxh2,mxh1) is constructed within the area 
+!  specified by sbound=(ramin,ramax,decmin,decmax,dcmin,dcmax).
+!
+! INPUTS
+!  Variable----Type------------Description--------------------------------------
+!  mxh1        int             Nr. of DEC cells in SK table
+!  mxh2        int             Nr. of RA cells in SK table
+!  mxh3        int             Nr. of DCOM cells in SK table
+!  npt         int             Number of particles
+!  ra          real8(npt)      RA of particles
+!  dec         real8(npt)      DEC of particles
+!  dc          real8(npt)      Comoving distance of particles
+!  sbound      real8(6)        Survey boundaries in RA,DEC,DCOM. Form is 
+!                              (ramin,ramax,decmin,decmax,dcmin,dcmax)
+!  nseps       int             Number of 3D separation bins
+!  seps        real4(nseps+1)  Bins in 3D separation
+!  nsepv       int             Number of radial separation bins
+!  sepv        real4(nsepv+1)  Bins in radial separation
+!
+! OUTPUTS
+!  Variable---Type-------------------Description--------------------------------
+!  sk          int(mxh3,mxh2,mxh1)   Skip table
+!  ll          int(np)               Linked list
+!
+! NOTES  -----------------------------------------------------------------------
+!  1. Angles are in degrees
+!  2. The boundaries of RA should be 0 - 360
+implicit none
+integer :: a,b,c,z
+real(kind=4) :: d
+z = a * b * c
+d = 0.
+end subroutine r_nada
+
+
 !==========================================================================================
 !   COUNTING ROUTINES - 3D SPHERICAL (PROJECTED)
 !==========================================================================================
@@ -342,7 +402,7 @@ end subroutine skll3d
 
 
 subroutine rppi_A(nt,npt,dec,dc,x,y,z,nsepp,sepp,nsepv,sepv,sbound, &
-           mxh1,mxh2,mxh3,cntid,logf,sk,ll,aapv)
+           mxh1,mxh2,mxh3,cntid,logf,sk,ll,aapvtot)
 !===============================================================================
 ! NAME
 !  rppi_A()
@@ -390,9 +450,14 @@ integer       :: sk(mxh3,mxh2,mxh1),ll(npt),mxh1,mxh2,mxh3,npt,nsepp,nsepv
 integer       :: nt,nthr,nc1,nc2,nc3,jq1m,jq2m
 integer       :: i,ii,j,jj,iq1,iq2,iq3,jq1,jq2,jq3,jq1min,jq2min,jq2max,jq2t
 character     :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend
+character*(MPI_MAX_PROCESSOR_NAME) hname
+real(kind=8)  :: aapvtot(nsepv,nsepp)
+character     :: rankstr*5
+real*8  tstart, tend, totaltime
+logical       :: flag
 
-!------Open log file---------------------------------
-open(11,file=logf,action='write',access='append')
+aapvtot   = 0.0d0
 
 ! Some useful print statements. Place where desired
 !print *, mxh1,mxh2,mxh3
@@ -421,8 +486,22 @@ hc1 = (decu-decl)/float(nc1)     !effective nr of DEC cells
 hc2 = (rau-ral)/float(nc2)       !effective nr of RA cells
 hc3 = (dcomu-dcoml)/float(nc3)   !effective nr of DCOM cells
 
+
 !----------------------------------------------------
-! Set the number of threads
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+ista = rank*nc1/nproc + 1
+iend =(rank+1)*nc1/nproc
+
+!----------------------------------------------------
+! Set the number of OMP threads
 if(nt<=0) then
    nthr = omp_get_num_procs()
 else
@@ -430,18 +509,34 @@ else
 endif
 call omp_set_num_threads(nthr)
 
-!----------------------------------------------------
-! Count pairs in SK grid
-write(*,*) ' '
-write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC strips  ===='
-!$omp parallel do reduction(+:aapv) default(shared) &
-!$omp& private(iq1,iq2,iq3,jq1,jq2,jq3,rcl,stm2,dltdec,jq1m,jq1min) &
+
+!------Open log file---------------------------------
+if(nproc>1) then
+   write(rankstr,'(".",i0)') rank
+else
+   rankstr = ''
+endif
+open(11,file=trim(logf) // trim(rankstr),action='write',access='append')
+
+
+write(*,*) '>>>> Process ',rank,' in ', trim(hname),' ista: ',ista,' iend: ',iend
+
+!tstart  = MPI_Wtime()
+!call sleep(60)
+!tend = MPI_Wtime()
+!totaltime = tend - tstart
+!write(*,*) 'wtime time', totaltime
+
+
+!tstart  = MPI_Wtime()
+!$omp parallel do reduction(+:aapv) default(shared) private(iq1) &
+!$omp& private(iq2,iq3,jq1,jq2,jq3,rcl,stm2,dltdec,jq1m,jq1min) &
 !$omp& private(dltra,jq2m,jq2min,jq2max,jq2t,j,i,xi,yi,zi,dci,rv,rp2,ii,jj) &
 !$omp& schedule(dynamic) if(nthr>1)
-do iq1=1,nc1
+do iq1=ista,iend
+   write(*,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
    !$omp critical
-   write(*,fmt="(i4)",advance='no') iq1                             ! for screen
-   write(11,*) cntid//' counting in DEC strip > ',iq1,'/',mxh1      ! for disk
+   write(11,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
    flush(11)
    !$omp end critical
    do iq2=1,nc2
@@ -488,7 +583,7 @@ do iq1=1,nc1
                      yi  = y(i)
                      zi  = z(i)
                      dci = dc(i)
-
+ 
                      do while(j/=0)
                         rv = abs(dci-dc(j))
                         if(rv<=rvmax) then
@@ -519,15 +614,64 @@ do iq1=1,nc1
          end do !---- End loop over ith particles ----
       end do !loop iq3
    end do !loop iq2
+   !aapv = aapv + 1.5d0
 end do
 !$omp end parallel do
 close(11)  ! close log
-write(*,*) ' '
+if(iend==nc1) then
+   write(*,*), cntid, ' IEND>: ',iend
+end if
+
+call mpi_reduce(aapv, aapvtot, nsepv*nsepp, mpi_real8, mpi_sum, 0, mpi_comm_world, ierr)
+
+!if(cntid=='DD') then
+!   write(*,*), '>>>>>>>>>>>>  DD DONE  >>>>>>>>>>>>>'
+!end if
+!if(cntid=='RR') then
+!   write(*,*), '>>>>>>>>>>>>  RR DONE  >>>>>>>>>>>>>'
+!end if
+
+! Sanity check
+! Print reduced aapv from each processor and then the total aapv, which should be the sum of both
+!call mpi_barrier(mpi_comm_world,ierr)
+!if(rank==0) then
+!   !call sleep(rank)
+!   do i=1,nsepv
+!      write(*,*) (aapv(i,j),j=1,nsepp)
+!   end do
+!   write(*,*) '+++++'
+!end if
+!call mpi_barrier(mpi_comm_world,ierr)
+!if(rank==1) then
+!   !call sleep(rank)
+!   do i=1,nsepv
+!      write(*,*) (aapv(i,j),j=1,nsepp)
+!   end do
+!   write(*,*) '+++++'
+!end if
+!call mpi_barrier(mpi_comm_world,ierr)
+!if(rank==0) then
+!   !call sleep(rank+2)
+!   do i=1,nsepv
+!      write(*,*) (aapvtot(i,j),j=1,nsepp)
+!   end do
+!end if
+
+!tend = MPI_Wtime()
+!totaltime = tend - tstart
+!write(*,*) 'wtime fortran loop total time', totaltime
+
+!write(*,*), cntid, donedd
+!write(*,*), cntid, donerr
+!call mpi_barrier(mpi_comm_world,ierr)
+!if((donedd==1).and.(donerr==1)) call mpi_finalize(ierr)
+!if(cntid=='RR') call mpi_finalize(ierr)
+!call mpi_finalize(ierr)
 end subroutine rppi_A
 
 
 subroutine rppi_A_wg(nt,npt,dec,dc,wei,x,y,z,nsepp,sepp,nsepv,sepv,sbound, &
-           mxh1,mxh2,mxh3,wfib,cntid,logf,sk,ll,aapv)
+           mxh1,mxh2,mxh3,wfib,cntid,logf,sk,ll,aapvtot)
 !===============================================================================
 ! NAME
 !  rppi_A_wg()
@@ -579,6 +723,14 @@ integer       :: sk(mxh3,mxh2,mxh1),ll(npt),mxh1,mxh2,mxh3,npt,nsepp,nsepv
 integer       :: nt,nthr,nc1,nc2,nc3,jq1m,jq2m
 integer       :: i,ii,j,jj,iq1,iq2,iq3,jq1,jq2,jq3,jq1min,jq2min,jq2max,jq2t,wfib
 character     :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend
+character*(MPI_MAX_PROCESSOR_NAME) hname
+real(kind=8)  :: aapvtot(nsepv,nsepp)
+character     :: rankstr*5
+real*8  tstart, tend, totaltime
+logical       :: flag
+
+aapvtot   = 0.0d0
 
 !------Open log file---------------------------------
 open(11,file=logf,action='write',access='append')
@@ -609,6 +761,19 @@ if(nc3>mxh3) nc3 = mxh3
 hc1 = (decu-decl)/float(nc1)     !effective nr of DEC cells
 hc2 = (rau-ral)/float(nc2)       !effective nr of RA cells
 hc3 = (dcomu-dcoml)/float(nc3)   !effective nr of DCOM cells
+
+!----------------------------------------------------
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+ista = rank*nc1/nproc + 1
+iend =(rank+1)*nc1/nproc
 
 !----------------------------------------------------
 ! Set the number of threads
@@ -716,13 +881,16 @@ do iq1=1,nc1
    end do !loop iq2
 end do
 !$omp end parallel do
+
+call mpi_reduce(aapv, aapvtot, nsepv*nsepp, mpi_real8, mpi_sum, 0, mpi_comm_world, ierr)
+
 close(11)  ! close log
 write(*,*) ' '
 end subroutine rppi_A_wg
 
 
 subroutine rppi_Ab(nt,npt,dec,dc,x,y,z,nsepp,sepp,nsepv,sepv,sbound, &
-           mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk,ll,aapv,baapv)
+           mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk,ll,aapvtot,baapvtot)
 !===============================================================================
 ! NAME
 !  rppi_Ab()
@@ -775,6 +943,12 @@ integer       :: sk(mxh3,mxh2,mxh1),ll(npt),mxh1,mxh2,mxh3,npt,nsepp,nsepv
 integer       :: nt,nthr,nc1,nc2,nc3,jq1m,jq2m,nbts,bseed
 integer       :: i,ii,j,jj,iq1,iq2,iq3,jq1,jq2,jq3,jq1min,jq2min,jq2max,jq2t
 character     :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend
+character*(MPI_MAX_PROCESSOR_NAME) hname
+real(kind=8)  :: aapvtot(nsepv,nsepp),baapvtot(nbts,nsepp,nsepv)
+character     :: rankstr*5
+real*8  tstart, tend, totaltime, zzz
+logical       :: flag
 
 !------Open log file---------------------------------
 open(11,file=logf,action='write',access='append')
@@ -812,6 +986,19 @@ hc3 = (dcomu-dcoml)/float(nc3)   !effective nr of DCOM cells
 call bootstrap(npt,nbts,bseed,wbts)
 
 !----------------------------------------------------
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+ista = rank*nc1/nproc + 1
+iend =(rank+1)*nc1/nproc
+
+!----------------------------------------------------
 ! Set the number of threads
 if(nt<=0) then
    nthr = omp_get_num_procs()
@@ -824,14 +1011,16 @@ call omp_set_num_threads(nthr)
 ! Count pairs in SK grid
 write(*,*) ' '
 write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC strips  ===='
+
+tstart  = MPI_Wtime()
 !$omp parallel do reduction(+:aapv,baapv) default(shared) &
 !$omp& private(iq1,iq2,iq3,jq1,jq2,jq3,rcl,stm2,dltdec,jq1m,jq1min) &
 !$omp& private(dltra,jq2m,jq2min,jq2max,jq2t,j,i,xi,yi,zi,dci,rv,rp2,ii,jj) &
 !$omp& schedule(guided) if(nthr>1)
-do iq1=1,nc1
+do iq1=ista,iend
+   write(*,*) 'PART ',trim(cntid), iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
    !$omp critical
-   write(*,fmt="(i4)",advance='no') iq1                             ! for screen
-   write(11,*) cntid//' counting in DEC strip > ',iq1,'/',mxh1      ! for disk
+   write(11,*) 'PART ',trim(cntid), iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
    flush(11)
    !$omp end critical
    do iq2=1,nc2
@@ -915,11 +1104,20 @@ end do
 !$omp end parallel do
 close(11)  ! close log
 write(*,*) ' '
+
+call mpi_reduce(aapv, aapvtot, nsepv*nsepp, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
+call mpi_reduce(baapv, baapvtot, nbts*nsepp*nsepv, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
+
+tend = MPI_Wtime()
+totaltime = tend - tstart
+write(*,*) 'wtime fortran loop total time', totaltime
+!call mpi_finalize(ierr)
+
 end subroutine rppi_Ab
 
 
 subroutine rppi_Ab_wg(nt,npt,dec,dc,wei,x,y,z,nsepp,sepp,nsepv,sepv,sbound, &
-           mxh1,mxh2,mxh3,nbts,bseed,wfib,cntid,logf,sk,ll,aapv,baapv)
+           mxh1,mxh2,mxh3,nbts,bseed,wfib,cntid,logf,sk,ll,aapvtot,baapvtot)
 !===============================================================================
 ! NAME
 !  rppi_Ab_wg()
@@ -975,6 +1173,13 @@ integer       :: sk(mxh3,mxh2,mxh1),ll(npt),mxh1,mxh2,mxh3,npt,nsepp,nsepv
 integer       :: nt,nthr,nc1,nc2,nc3,jq1m,jq2m,nbts,bseed,wfib
 integer       :: i,ii,j,jj,iq1,iq2,iq3,jq1,jq2,jq3,jq1min,jq2min,jq2max,jq2t
 character     :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend
+character*(MPI_MAX_PROCESSOR_NAME) hname
+real(kind=8)  :: aapvtot(nsepv,nsepp),baapvtot(nbts,nsepp,nsepv)
+character     :: rankstr*5
+real*8  tstart, tend, totaltime
+logical       :: flag
+integer       :: nfile
 
 !------Open log file---------------------------------
 open(11,file=logf,action='write',access='append')
@@ -987,6 +1192,7 @@ open(11,file=logf,action='write',access='append')
 
 !----------------------------------------------------
 ! Reset the counts, set (rpmax,rvmax) and square rp bins
+nfile  = 11
 aapv   = 0.0d0
 baapv  = 0.0d0
 rpmax  = sepp(nsepp+1)
@@ -1012,6 +1218,19 @@ hc3 = (dcomu-dcoml)/float(nc3)   !effective nr of DCOM cells
 call bootstrap(npt,nbts,bseed,wbts)
 
 !----------------------------------------------------
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+ista = rank*nc1/nproc + 1
+iend =(rank+1)*nc1/nproc
+
+!----------------------------------------------------
 ! Set the number of threads
 if(nt<=0) then
    nthr = omp_get_num_procs()
@@ -1024,14 +1243,16 @@ call omp_set_num_threads(nthr)
 ! Count pairs in SK grid
 write(*,*) ' '
 write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC strips  ===='
+
+tstart  = MPI_Wtime()
 !$omp parallel do reduction(+:aapv,baapv) default(shared) &
 !$omp& private(iq1,iq2,iq3,jq1,jq2,jq3,rcl,stm2,dltdec,jq1m,jq1min) &
 !$omp& private(dltra,jq2m,jq2min,jq2max,jq2t,j,i,xi,yi,zi,dci,rv,rp2,ii,jj,wi,wpp,shth2) &
 !$omp& schedule(guided) if(nthr>1)
-do iq1=1,nc1
+do iq1=ista,iend
+   write(*,*) 'PART ', iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
    !$omp critical
-   write(*,fmt="(i4)",advance='no') iq1                             ! for screen
-   write(11,*) cntid//' counting in DEC strip > ',iq1,'/',mxh1      ! for disk
+   write(11,*) 'PART ', iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
    flush(11)
    !$omp end critical
    do iq2=1,nc2
@@ -1121,11 +1342,18 @@ end do
 !$omp end parallel do
 close(11)  ! close log
 write(*,*) ' '
+
+call mpi_reduce(aapv, aapvtot, nsepv*nsepp, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
+call mpi_reduce(baapv, baapvtot, nbts*nsepp*nsepv, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
+
+tend = MPI_Wtime()
+totaltime = tend - tstart
+write(*,*) 'wtime fortran loop total time', totaltime
 end subroutine rppi_Ab_wg
 
 
 subroutine rppi_C(nt,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1, &
-           nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,cntid,logf,sk1,ll1,cdpv)
+           nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,cntid,logf,sk1,ll1,cdpvtot)
 !===============================================================================
 ! NAME
 !  rppi_C()
@@ -1173,16 +1401,19 @@ real(kind=8)  :: ra(npt),dec(npt),sbound(6),ral,rau,decl,decu,dcoml,dcomu,hc1,hc
 real(kind=8)  :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1),rcl,stm2,dltdec,dltra
 real(kind=8)  :: dc(npt),dc1(npt1),xi,dci
 real(kind=8)  :: sepp(nsepp+1),sepv(nsepv+1),sepp2(nsepp+1),rpmax,rpmax2,rvmax,rv,idsepv
-real(kind=8)  :: cdpv(nsepv,nsepp)
+real(kind=8)  :: cdpv(nsepv,nsepp),cdpvtot(nsepv,nsepp)
 integer       :: sk1(mxh3,mxh2,mxh1),ll1(npt1),mxh1,mxh2,mxh3,npt,npt1,nsepp,nsepv
-integer       :: nt,nthr,fracp,dpart,nadv,nc1,nc2,nc3,jq1m,jq2m
-integer       :: i,ii,j,jj,iq1,iq2,iq3,jq1,jq2,jq3,jq2min,jq2max,jq2t,p1,p2
+integer       :: nt,nthr,nc1,nc2,nc3,jq1m,jq2m
+integer       :: i,ii,j,jj,iq1,iq2,iq3,jq1,jq2,jq3,jq2min,jq2max,jq2t
 character     :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend,dpart
+character*(MPI_MAX_PROCESSOR_NAME) hname
+integer       :: rest
+character     :: rankstr*5
+logical       :: flag
 
-!------Open log file---------------------------------
-open(11,file=logf,action='write',access='append')
+cdpvtot = 0.0d0
 
-fracp = 0 ; dpart = 0 ; nadv = 0  !Reset progress counters
 
 !----------------------------------------------------
 ! Reset the counts, set (rpmax,rvmax) and square rp bins
@@ -1206,6 +1437,26 @@ hc2 = (rau-ral)/float(nc2)      !effective nr of RA cells
 hc3 = (dcomu-dcoml)/float(nc3)  !effective nr of DCOM cells
 
 !----------------------------------------------------
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+rest = modulo(npt, nproc)
+if(rest==0) then
+   ista = rank*npt/nproc + 1
+   iend = (rank+1)*npt/nproc
+else
+   ista = rank*(npt-rest)/nproc + 1
+   iend = (rank+1)*(npt-rest)/nproc
+   if(rank==(nproc-1)) iend=npt
+endif
+
+!----------------------------------------------------
 ! Set the number of threads
 if(nt<=0) then
    nthr = omp_get_num_procs()
@@ -1214,20 +1465,33 @@ else
 endif
 call omp_set_num_threads(nthr)
 
-!----------------------------------------------------
-! Some inits
+!------Open log file---------------------------------
+if(nproc>1) then
+   write(rankstr,'(".",i0)') rank
+else
+   rankstr = ''
+endif
+open(11,file=trim(logf) // trim(rankstr),action='write',access='append')
+
+
+write(*,*) '>>>> Process ',rank,' in ', trim(hname),' ista: ',ista,' iend: ',iend
+
+
 dpart = int(float(npt)/float(mxh1)) !choose dpart so we get mhx1 parts
 
 !----------------------------------------------------
 ! Count pairs in SK grid
-write(*,*) ' '
-write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC strips'
 !$omp parallel do reduction(+:cdpv) default(shared) &
 !$omp& private(iq1,iq2,iq3,jq1,jq2,jq3,rcl,stm2,dltdec,jq1m) &
 !$omp& private(dltra,jq2m,jq2min,jq2max,jq2t,j,i,xi,dci,rv,rp2,ii,jj) &
-!$omp& schedule(guided) firstprivate(fracp) if(nthr>1)
+!$omp& schedule(dynamic) if(nthr>1)
 
-do i=1,npt   !---- Loop over ith particles ----
+do i=ista,iend   !---- Loop over ith particles ----  1,npt
+   !XXX This works but prints one line for every particle!
+   !write(*,*) 'Part ',i, '(', ista,'-',iend, ')', ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+   !write(11,*) 'Part ',i, '(', ista,'-',iend, ')', ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+   !flush(11)
+
    xi  = x(i)
    dci = dc(i)
    
@@ -1235,19 +1499,15 @@ do i=1,npt   !---- Loop over ith particles ----
    iq2 = int((ra(i)-ral)/hc2)+1
    iq3 = int((dci-dcoml)/hc3)+1
 
-   fracp = fracp + 1  ! accumulate particles and check when above the step size
-   if(fracp>=dpart) then
-       !$omp critical
-       nadv = nadv + 1
-       !omp flush (nadv)
-       p1   = (nadv-1)*dpart + 1
-       p2   = nadv*dpart
-       if((nadv+1)*dpart>npt) p2=npt
-       ! Note we are not really counting in mxh1 strips, just mymicking
-       write(*,fmt="(i4)",advance='no') nadv                        ! for screen
-       write(11,*) cntid//' counting in DEC strip > ',nadv,' (',p1,'-',p2,')' !for disk
-       fracp = 0
-       !$omp end critical
+   !XXX This works, but we need a better way to print the loop progress
+   if(modulo(i,dpart)==0) then
+      write(*,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
+      write(11,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
+      flush(11)
+
+      !write(*,*) i, ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+      !write(11,*) i, ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+      !flush(11)
    endif
    
    lp_jq3: do jq3 = iq3-1,iq3+1
@@ -1308,11 +1568,14 @@ end do
 !$omp end parallel do
 close(11)  ! close log
 write(*,*) ' '
+
+call mpi_reduce(cdpv, cdpvtot, nsepv*nsepp, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
+!call mpi_barrier(mpi_comm_world,ierr)
 end subroutine rppi_C
 
 
 subroutine rppi_C_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1, &
-           nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk1,ll1,cdpv)
+           nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk1,ll1,cdpvtot)
 !===============================================================================
 ! NAME
 !  rppi_C_wg()
@@ -1364,11 +1627,19 @@ real(kind=8)  :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1),rcl,stm2,dltdec
 real(kind=8)  :: dc(npt),dc1(npt1),xi,dci
 real(kind=4)  :: wei(npt),wei1(npt1),wi,wpp
 real(kind=8)  :: sepp(nsepp+1),sepv(nsepv+1),sepp2(nsepp+1),rpmax,rpmax2,rvmax,rv,idsepv,shth2
-real(kind=8)  :: cdpv(nsepv,nsepp)
 integer       :: sk1(mxh3,mxh2,mxh1),ll1(npt1),mxh1,mxh2,mxh3,npt,npt1,nsepp,nsepv,wfib
 integer       :: nt,nthr,ndp,fracp,dpart,nadv,nc1,nc2,nc3,jq1m,jq2m
 integer       :: i,ii,j,jj,iq1,iq2,iq3,jq1,jq2,jq3,jq2min,jq2max,jq2t,p1,p2
 character     :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend
+character*(MPI_MAX_PROCESSOR_NAME) hname
+integer       :: rest
+character     :: rankstr*5
+logical       :: flag
+real(kind=8)  :: cdpv(nsepv,nsepp)
+real(kind=8)  :: cdpvtot(nsepv,nsepp)
+
+cdpvtot = 0.0d0
 
 !------Open log file---------------------------------
 open(11,file=logf,action='write',access='append')
@@ -1395,6 +1666,26 @@ if(nc3>mxh3) nc3 = mxh3
 hc1 = (decu-decl)/float(nc1)    !effective nr of DEC cells
 hc2 = (rau-ral)/float(nc2)      !effective nr of RA cells
 hc3 = (dcomu-dcoml)/float(nc3)  !effective nr of DCOM cells
+
+!----------------------------------------------------
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+rest = modulo(npt, nproc)
+if(rest==0) then
+   ista = rank*npt/nproc + 1
+   iend = (rank+1)*npt/nproc
+else
+   ista = rank*(npt-rest)/nproc + 1
+   iend = (rank+1)*(npt-rest)/nproc
+   if(rank==(nproc-1)) iend=npt
+endif
 
 !----------------------------------------------------
 ! Set the number of threads
@@ -1503,6 +1794,7 @@ do i=1,npt   !---- Loop over ith particles ----
    end do lp_jq3
 end do
 !$omp end parallel do
+call mpi_reduce(cdpv, cdpvtot, nsepv*nsepp, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
 close(11)  ! close log
 write(*,*) ' '
 end subroutine rppi_C_wg
@@ -1562,11 +1854,19 @@ real(kind=8)  :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1),rcl,stm2,dltdec
 real(kind=8)  :: dc(npt),dc1(npt1),xi,dci
 real(kind=4)  :: wbts(nbts,npt),wbts1(nbts,npt1)
 real(kind=8)  :: sepp(nsepp+1),sepv(nsepv+1),sepp2(nsepp+1),rpmax,rpmax2,rvmax,rv,idsepv
-real(kind=8)  :: cdpv(nsepv,nsepp),bcdpv(nbts,nsepp,nsepv)
 integer       :: sk1(mxh3,mxh2,mxh1),ll1(npt1),mxh1,mxh2,mxh3,npt,npt1,nsepp,nsepv,nbts,bseed
-integer       :: nt,nthr,ndp,fracp,dpart,nadv,nc1,nc2,nc3,jq1m,jq2m
+integer       :: nt,nthr,ndp,fracp,nadv,nc1,nc2,nc3,jq1m,jq2m
 integer       :: i,ii,j,jj,iq1,iq2,iq3,jq1,jq2,jq3,jq2min,jq2max,jq2t,p1,p2
 character     :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend,dpart
+character*(MPI_MAX_PROCESSOR_NAME) hname
+integer       :: rest
+character     :: rankstr*5
+logical       :: flag
+real(kind=8)  :: cdpv(nsepv,nsepp),bcdpv(nbts,nsepp,nsepv)
+real(kind=8)  :: cdpvtot(nsepv,nsepp),bcdpvtot(nbts,nsepp,nsepv)
+
+cdpvtot = 0.0d0
 
 !------Open log file---------------------------------
 open(11,file=logf,action='write',access='append')
@@ -1599,6 +1899,26 @@ hc3 = (dcomu-dcoml)/float(nc3)  !effective nr of DCOM cells
 ! Generate bootstrap samples
 call bootstrap(npt,nbts,bseed,wbts)
 call bootstrap(npt1,nbts,bseed,wbts1)
+
+!----------------------------------------------------
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+rest = modulo(npt, nproc)
+if(rest==0) then
+   ista = rank*npt/nproc + 1
+   iend = (rank+1)*npt/nproc
+else
+   ista = rank*(npt-rest)/nproc + 1
+   iend = (rank+1)*(npt-rest)/nproc
+   if(rank==(nproc-1)) iend=npt
+endif
 
 !----------------------------------------------------
 ! Set the number of threads
@@ -1705,12 +2025,14 @@ end do
 !$omp end parallel do
 close(11)  ! close log
 write(*,*) ' '
+call mpi_reduce(cdpv, cdpvtot, nsepv*nsepp, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
+call mpi_reduce(bcdpv, bcdpvtot, nbts*nsepp*nsepv, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
 end subroutine rppi_Cb
 
 
 subroutine rppi_Cb_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1, &
            nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,nbts,bseed,wfib,cntid, &
-           logf,sk1,ll1,cdpv,bcdpv)
+           logf,sk1,ll1,cdpvtot,bcdpvtot)
 !===============================================================================
 ! NAME
 !  rppi_Cb_wg()
@@ -1772,6 +2094,14 @@ integer       :: sk1(mxh3,mxh2,mxh1),ll1(npt1),mxh1,mxh2,mxh3,npt,npt1,nsepp,nse
 integer       :: nt,nthr,ndp,fracp,dpart,nadv,nc1,nc2,nc3,jq1m,jq2m
 integer       :: i,ii,j,jj,iq1,iq2,iq3,jq1,jq2,jq3,jq2min,jq2max,jq2t,p1,p2
 character     :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend
+character*(MPI_MAX_PROCESSOR_NAME) hname
+real(kind=8)  :: cdpvtot(nsepv,nsepp),bcdpvtot(nbts,nsepp,nsepv)
+integer       :: rest
+character     :: rankstr*5
+logical       :: flag
+real*8  tstart, tend, totaltime
+
 
 !------Open log file---------------------------------
 open(11,file=logf,action='write',access='append')
@@ -1806,6 +2136,26 @@ call bootstrap(npt,nbts,bseed,wbts)
 call bootstrap(npt1,nbts,bseed,wbts1)
 
 !----------------------------------------------------
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+rest = modulo(npt, nproc)
+if(rest==0) then
+   ista = rank*npt/nproc + 1
+   iend = (rank+1)*npt/nproc
+else
+   ista = rank*(npt-rest)/nproc + 1
+   iend = (rank+1)*(npt-rest)/nproc
+   if(rank==(nproc-1)) iend=npt
+endif
+
+!----------------------------------------------------
 ! Set the number of threads
 if(nt<=0) then
    nthr = omp_get_num_procs()
@@ -1823,12 +2173,15 @@ dpart = int(float(npt)/float(mxh1)) !choose dpart so we get mhx1 parts
 write(11,*) 'Looping...'
 write(*,*) ' '
 write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC strips'
+
+tstart  = MPI_Wtime()
 !$omp parallel do reduction(+:cdpv,bcdpv) default(shared) &
 !$omp& private(iq1,iq2,iq3,jq1,jq2,jq3,rcl,stm2,dltdec,jq1m) &
 !$omp& private(dltra,jq2m,jq2min,jq2max,jq2t,j,i,xi,wi,dci,rv,rp2,shth2,wpp,ii,jj) &
 !$omp& schedule(guided) firstprivate(fracp) if(nthr>1)
 
-do i=1,npt   !---- Loop over ith particles ----
+do i=ista,iend
+
    xi  = x(i)
    dci = dc(i)
    wi  = wei(i)
@@ -1917,6 +2270,14 @@ end do
 !$omp end parallel do
 close(11)  ! close log
 write(*,*) ' '
+
+call mpi_reduce(cdpv, cdpvtot, nsepv*nsepp, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
+call mpi_reduce(bcdpv, bcdpvtot, nbts*nsepp*nsepv, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
+
+tend = MPI_Wtime()
+totaltime = tend - tstart
+write(*,*) 'wtime fortran loop total time', totaltime
+
 end subroutine rppi_Cb_wg
 
 
@@ -3638,7 +3999,7 @@ end do
 end subroutine skll2d
 
 
-subroutine th_A(nt,npt,dec,x,y,z,nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk,ll,aa)
+subroutine th_A(nt,npt,dec,x,y,z,nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk,ll,aatot)
 !===============================================================================
 ! NAME
 !  th_A()
@@ -3679,9 +4040,13 @@ real(kind=8) :: aa(nsep)
 integer      :: nt,nthr,npt,mxh1,mxh2,nsep,sk(mxh2,mxh1),ll(npt),nc1,nc2
 integer      :: jq1m,iq1,iq2,jq1,jq2,i,j,jq2max,jq2min,jq2m,jq2t,ii
 character    :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend
+character*(MPI_MAX_PROCESSOR_NAME) hname
+real(kind=8)  :: aatot(nsep)
+character     :: rankstr*5
+real*8  tstart, tend, totaltime
+logical       :: flag
 
-!------Open log file---------------------------------
-open(11,file=logf,action='write',access='append')
 
 ! Some useful print statements. Place where desired
 !print *, mxh1,mxh2
@@ -3705,6 +4070,19 @@ hc1 = (decu-decl)/float(nc1)   !effective nr of DEC cells
 hc2 = (rau-ral)/float(nc2)     !effective nr of RA cells
 
 !----------------------------------------------------
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+ista = rank*nc1/nproc + 1
+iend =(rank+1)*nc1/nproc
+
+!----------------------------------------------------
 ! Set the number of threads
 if(nt<=0) then
    nthr = omp_get_num_procs()
@@ -3717,6 +4095,16 @@ call omp_set_num_threads(nthr)
 stm2 = sin(dltdec*0.5*deg2rad)
 jq1m = int(dltdec/hc1)+1
 
+!------Open log file---------------------------------
+if(nproc>1) then
+   write(rankstr,'(".",i0)') rank
+else
+   rankstr = ''
+endif
+open(11,file=trim(logf) // trim(rankstr),action='write',access='append')
+
+write(*,*) '>>>> Process ',rank,' in ', trim(hname),' ista: ',ista,' iend: ',iend
+
 !----------------------------------------------------
 ! Count pairs in SK grid
 write(*,*) ' '
@@ -3725,12 +4113,12 @@ write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC stri
 !$omp& private(iq1,iq2,jq1,jq2,dltra,jq2m,jq2min,jq2max,jq2t,j,i) &
 !$omp& private(xi,yi,zi,shth2,ii) &
 !$omp& schedule(guided) if(nthr>1)
-do iq1=1,nc1
-   !$omp critical
-   write(*,fmt="(i4)",advance='no') iq1                             ! for screen
-   write(11,*) cntid//' counting in DEC strip > ',iq1,'/',mxh1      ! for disk
-   flush(11)
-   !$omp end critical
+do iq1=ista,iend
+   write(*,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
+   !$$$$$oamp critical
+   write(11,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
+   !flush(11)
+   !$$$$$oamp end critical
    do iq2=1,nc2
       i = sk(iq2,iq1) ! index of ith particle 
       do while(i/=0)  !---- Loop over ith particles ----
@@ -3800,6 +4188,7 @@ do iq1=1,nc1
    end do !iq2 loop
 end do !iq1 loop
 !$omp end parallel do
+call mpi_reduce(aa, aatot, nsep, mpi_real8, mpi_sum, 0, mpi_comm_world, ierr)
 close(11)  ! close log
 write(*,*) ' '
 end subroutine th_A
@@ -3981,7 +4370,7 @@ end subroutine th_A_wg
 
 
 subroutine th_Ab(nt,npt,dec,x,y,z,nsep,sep,sbound,mxh1,mxh2,nbts,bseed,cntid,logf, &
-           sk,ll,aa,baa)
+           sk,ll,aatot,baatot)
 !===============================================================================
 ! NAME
 !  th_Ab()
@@ -4027,9 +4416,15 @@ real(kind=8) :: aa(nsep),baa(nbts,nsep)
 integer      :: nt,nthr,npt,mxh1,mxh2,nsep,sk(mxh2,mxh1),ll(npt),nc1,nc2,nbts,bseed
 integer      :: jq1m,iq1,iq2,jq1,jq2,i,j,jq2max,jq2min,jq2m,jq2t,ii
 character    :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend
+character*(MPI_MAX_PROCESSOR_NAME) hname
+real(kind=8)  :: aatot(nsep),baatot(nbts,nsep)
+character     :: rankstr*5
+real*8  tstart, tend, totaltime
+logical       :: flag
 
 !------Open log file---------------------------------
-open(11,file=logf,action='write',access='append')
+!open(11,file=logf,action='write',access='append')
 
 ! Some useful print statements. Place where desired
 !print *, mxh1,mxh2
@@ -4041,6 +4436,8 @@ open(11,file=logf,action='write',access='append')
 ! reset the counts, set max. ang. distance and square bins
 aa      = 0.d0
 baa     = 0.d0
+aatot   = 0.d0
+baatot  = 0.d0
 dltdec  = sep(nsep+1)
 sep2    = (sin(0.5*sep*deg2rad))**2
 sep2max = sep2(nsep+1)
@@ -4058,6 +4455,19 @@ hc2 = (rau-ral)/float(nc2)     !effective nr of RA cells
 call bootstrap(npt,nbts,bseed,wbts)
 
 !----------------------------------------------------
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+ista = rank*nc1/nproc + 1
+iend =(rank+1)*nc1/nproc
+
+!----------------------------------------------------
 ! Set the number of threads
 if(nt<=0) then
    nthr = omp_get_num_procs()
@@ -4070,6 +4480,14 @@ call omp_set_num_threads(nthr)
 stm2 = sin(dltdec*0.5*deg2rad)
 jq1m = int(dltdec/hc1)+1
 
+!------Open log file---------------------------------
+if(nproc>1) then
+   write(rankstr,'(".",i0)') rank
+else
+   rankstr = ''
+endif
+open(11,file=trim(logf) // trim(rankstr),action='write',access='append')
+
 !----------------------------------------------------
 ! Count pairs in SK grid
 write(*,*) ' '
@@ -4078,10 +4496,11 @@ write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC stri
 !$omp& private(iq1,iq2,jq1,jq2,dltra,jq2m,jq2min,jq2max,jq2t,j,i) &
 !$omp& private(xi,yi,zi,shth2,ii) &
 !$omp& schedule(guided) if(nthr>1)
-do iq1=1,nc1
+do iq1=ista,iend
+   write(*,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
    !$omp critical
-   write(*,fmt="(i4)",advance='no') iq1                             ! for screen
-   write(11,*) cntid//' counting in DEC strip > ',iq1,'/',mxh1      ! for disk
+   write(11,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
+   !write(11,*) 'a2'
    flush(11)
    !$omp end critical
    do iq2=1,nc2
@@ -4156,6 +4575,8 @@ do iq1=1,nc1
    end do !iq2 loop
 end do !iq1 loop
 !$omp end parallel do
+call mpi_reduce(aa, aatot, nsep, mpi_real8, mpi_sum, 0, mpi_comm_world, ierr)
+call mpi_reduce(baa, baatot, nbts*nsep, mpi_real8, mpi_sum, 0, mpi_comm_world, ierr)
 close(11)  ! close log
 write(*,*) ' '
 end subroutine th_Ab
@@ -4353,7 +4774,7 @@ end subroutine th_Ab_wg
 
 
 subroutine th_C(nt,npt,ra,dec,x,y,z,npt1,x1,y1,z1, &
-                nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk1,ll1,cdth)
+                nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk1,ll1,cdthtot)
 !===============================================================================
 ! NAME
 !  th_C()
@@ -4394,14 +4815,19 @@ implicit none
 real(kind=8) :: ra(npt),dec(npt),ral,rau,decl,decu,hc1,hc2,shth2,stm2,dltra,dltdec
 real(kind=8) :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1) 
 real(kind=8) :: sep(nsep+1),sep2(nsep+1),sbound(4),sep2max,xi,yi,zi
-real(kind=8) :: cdth(nsep)
+real(kind=8) :: cdth(nsep), cdthtot(nsep)
 integer      :: nt,nthr,sk1(mxh2,mxh1),ll1(npt1),mxh1,mxh2,npt,npt1,nsep,ndp
 integer      :: fracp,dpart,nadv,nc1,nc2,i,ii,j,iq1,iq2,p1,p2,jq1,jq2,jq1m
 integer      :: jq2m,jq2max,jq2min,jq2t
 character    :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend
+character*(MPI_MAX_PROCESSOR_NAME) hname
+integer       :: rest
+character     :: rankstr*5
+logical       :: flag
 
 !------Open log file---------------------------------
-open(11,file=logf,action='write',access='append')
+!open(11,file=logf,action='write',access='append')
 
 fracp = 0 ; dpart = 0 ; nadv = 0  !Reset progress counters
 
@@ -4421,6 +4847,26 @@ hc1 = (decu-decl)/float(nc1)   !effective nr of DEC cells
 hc2 = (rau-ral)/float(nc2)     !effective nr of RA cells
 
 !----------------------------------------------------
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+rest = modulo(npt, nproc)
+if(rest==0) then
+   ista = rank*npt/nproc + 1
+   iend = (rank+1)*npt/nproc
+else
+   ista = rank*(npt-rest)/nproc + 1
+   iend = (rank+1)*(npt-rest)/nproc
+   if(rank==(nproc-1)) iend=npt
+endif
+
+!----------------------------------------------------
 ! Set the number of threads
 if(nt<=0) then
    nthr = omp_get_num_procs()
@@ -4431,9 +4877,24 @@ call omp_set_num_threads(nthr)
 
 !----------------------------------------------------
 ! Some inits
-dpart = int(float(npt)/float(mxh1)) !choose dpart so we get mhx1 parts
+!dpart = int(float(npt)/float(mxh1)) !choose dpart so we get mhx1 parts
 stm2  = sin(dltdec*0.5*deg2rad)
 jq1m  = int(dltdec/hc1)+1
+
+!------Open log file---------------------------------
+if(nproc>1) then
+   write(rankstr,'(".",i0)') rank
+else
+   rankstr = ''
+endif
+open(11,file=trim(logf) // trim(rankstr),action='write',access='append')
+
+
+write(*,*) '>>>> Process ',rank,' in ', trim(hname),' ista: ',ista,' iend: ',iend
+
+
+dpart = int(float(npt)/float(mxh1)) !choose dpart so we get mhx1 parts
+
 
 !----------------------------------------------------
 ! Count pairs in SK grid
@@ -4444,24 +4905,46 @@ write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC stri
 !$omp& private(dltra,jq2m,jq2min,jq2max,jq2t,j,i,xi,yi,zi,shth2,ii,fracp,p1,p2) &
 !$omp& schedule(guided) if(nthr>1)
 
-do i=1,npt
+!do i=1,npt
+do i=ista,iend   !---- Loop over ith particles ----  1,npt
+   !XXX This works but prints one line for every particle!
+   !write(*,*) 'Part ',i, '(', ista,'-',iend, ')', ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+   !write(11,*) 'Part ',i, '(', ista,'-',iend, ')', ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+   !flush(11)
+   
    iq1 = int((dec(i)-decl)/hc1)+1
    iq2 = int((ra(i)-ral)/hc2)+1
    fracp = fracp + 1  ! accumulate particles and check when above the step size
-   if(fracp>=dpart) then
-       !$omp critical
-       nadv = nadv + 1
-       !omp flush (nadv)
-       p1   = (nadv-1)*dpart + 1
-       p2   = nadv*dpart
-       if((nadv+1)*dpart>npt) p2=npt
-       !note we are not really counting in mxh1 strips, just mymicking
-       write(*,fmt="(i4)",advance='no') nadv                        ! for screen
-       write(11,*) cntid//' counting in DEC strip > ',nadv,' (',p1,'-',p2,')' !for disk
-       flush(11)
-       fracp = 0
-       !$omp end critical
+   
+   
+   !XXX This works, but we need a better way to print the loop progress
+   if(modulo(i,dpart)==0) then
+      !$omp critical
+      write(*,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
+      write(11,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
+      !write(11,*) 'a3'
+      flush(11)
+      !$omp end critical
+      !write(*,*) i, ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+      !write(11,*) i, ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+      !flush(11)
    endif
+   
+!   if(fracp>=dpart) then
+       !$$$$$oyymp critical
+!       nadv = nadv + 1
+       !omp flush (nadv)
+!       p1   = (nadv-1)*dpart + 1
+!       p2   = nadv*dpart
+!       if((nadv+1)*dpart>iend) p2=iend
+       !note we are not really counting in mxh1 strips, just mymicking
+!       write(*,fmt="(i4)",advance='no') nadv                        ! for screen
+!       write(11,*) cntid//' counting in DEC strip > ',nadv,' (',p1,'-',p2,')' !for disk
+!       flush(11)
+!       fracp = 0
+       !$$$$$o123mp end critical
+!   endif
+   
    lp_jq1: do jq1=iq1-jq1m,iq1+jq1m
       if(jq1>nc1.or.jq1<1) cycle lp_jq1
       if(jq1==iq1) then
@@ -4522,6 +5005,7 @@ do i=1,npt
 end do
 !$omp end parallel do
 close(11)  ! close log
+call mpi_reduce(cdth, cdthtot, nsep, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
 write(*,*) ' '
 end subroutine th_C
 
@@ -4710,7 +5194,7 @@ end subroutine th_C_wg
 
 
 subroutine th_Cb(nt,npt,ra,dec,x,y,z,npt1,x1,y1,z1, &
-                 nsep,sep,sbound,mxh1,mxh2,nbts,bseed,cntid,logf,sk1,ll1,cdth,bcdth)
+                 nsep,sep,sbound,mxh1,mxh2,nbts,bseed,cntid,logf,sk1,ll1,cdthtot,bcdthtot)
 !===============================================================================
 ! NAME
 !  th_Cb()
@@ -4757,13 +5241,19 @@ real(kind=8) :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1)
 real(kind=8) :: sep(nsep+1),sep2(nsep+1),sbound(4),sep2max,xi,yi,zi
 real(kind=4) :: wbts(nbts,npt),wbts1(nbts,npt1)
 real(kind=8) :: cdth(nsep),bcdth(nbts,nsep)
+real(kind=8) :: cdthtot(nsep),bcdthtot(nbts,nsep)
 integer      :: nt,nthr,sk1(mxh2,mxh1),ll1(npt1),mxh1,mxh2,npt,npt1,nsep,ndp
 integer      :: fracp,dpart,nadv,nc1,nc2,i,ii,j,iq1,iq2,p1,p2,jq1,jq2,jq1m,nbts,bseed
 integer      :: jq2m,jq2max,jq2min,jq2t
 character    :: cntid*2,logf*80
+integer       :: nproc,rank,ierr,leng,ista,iend
+character*(MPI_MAX_PROCESSOR_NAME) hname
+integer       :: rest
+character     :: rankstr*5
+logical       :: flag
 
 !------Open log file---------------------------------
-open(11,file=logf,action='write',access='append')
+!open(11,file=logf,action='write',access='append')
 
 fracp = 0 ; dpart = 0 ; nadv = 0  !Reset progress counters
 
@@ -4783,6 +5273,26 @@ hc1 = (decu-decl)/float(nc1)   !effective nr of DEC cells
 hc2 = (rau-ral)/float(nc2)     !effective nr of RA cells
 
 !----------------------------------------------------
+! MPI initialization
+call mpi_initialized(flag,ierr)
+if(.not.flag) then
+   call mpi_init(ierr)
+endif
+call mpi_comm_size(mpi_comm_world, nproc, ierr)
+call mpi_comm_rank(mpi_comm_world, rank, ierr)
+call mpi_get_processor_name(hname,leng,ierr)
+
+rest = modulo(npt, nproc)
+if(rest==0) then
+   ista = rank*npt/nproc + 1
+   iend = (rank+1)*npt/nproc
+else
+   ista = rank*(npt-rest)/nproc + 1
+   iend = (rank+1)*(npt-rest)/nproc
+   if(rank==(nproc-1)) iend=npt
+endif
+
+!----------------------------------------------------
 ! Generate bootstrap samples
 call bootstrap(npt,nbts,bseed,wbts)
 call bootstrap(npt1,nbts,bseed,wbts1)
@@ -4795,6 +5305,26 @@ else
    nthr = nt
 endif
 call omp_set_num_threads(nthr)
+
+!----------------------------------------------------
+! Some inits
+!dpart = int(float(npt)/float(mxh1)) !choose dpart so we get mhx1 parts
+stm2  = sin(dltdec*0.5*deg2rad)
+jq1m  = int(dltdec/hc1)+1
+
+!------Open log file---------------------------------
+if(nproc>1) then
+   write(rankstr,'(".",i0)') rank
+else
+   rankstr = ''
+endif
+open(11,file=trim(logf) // trim(rankstr),action='write',access='append')
+
+
+write(*,*) '>>>> Process ',rank,' in ', trim(hname),' ista: ',ista,' iend: ',iend
+
+
+dpart = int(float(npt)/float(mxh1)) !choose dpart so we get mhx1 parts
 
 !----------------------------------------------------
 ! Some inits
@@ -4811,24 +5341,43 @@ write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC stri
 !$omp& private(dltra,jq2m,jq2min,jq2max,jq2t,j,i,xi,yi,zi,shth2,ii,p1,p2) &
 !$omp& schedule(guided) firstprivate(fracp) if(nthr>1)
 
-do i=1,npt
+!do i=1,npt
+do i=ista,iend   !---- Loop over ith particles ----  1,npt
+   !XXX This works but prints one line for every particle!
+   !write(*,*) 'Part ',i, '(', ista,'-',iend, ')', ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+   !write(11,*) 'Part ',i, '(', ista,'-',iend, ')', ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+   !flush(11)
+
    iq1 = int((dec(i)-decl)/hc1)+1
    iq2 = int((ra(i)-ral)/hc2)+1
    fracp = fracp + 1  ! accumulate particles and check when above the step size
-   if(fracp>=dpart) then
-       !$omp critical
-       nadv = nadv + 1
+!   if(fracp>=dpart) then
+       !$$$$oasdfmp critical
+!       nadv = nadv + 1
        !omp flush (nadv)
-       p1   = (nadv-1)*dpart + 1
-       p2   = nadv*dpart
-       if((nadv+1)*dpart>npt) p2=npt
+!       p1   = (nadv-1)*dpart + 1
+!       p2   = nadv*dpart
+!       if((nadv+1)*dpart>npt) p2=npt
        !note we are not really counting in mxh1 strips, just mymicking
-       write(*,fmt="(i4)",advance='no') nadv                        ! for screen
-       write(11,*) cntid//' counting in DEC strip > ',nadv,' (',p1,'-',p2,')' !for disk
-       flush(11)
-       fracp = 0
-       !$omp end critical
-   endif
+!       write(*,fmt="(i4)",advance='no') nadv                        ! for screen
+!       write(11,*) cntid//' counting in DEC strip > ',nadv,' (',p1,'-',p2,')' !for disk
+!       flush(11)
+!       fracp = 0
+       !$$$$oasdamp end critical
+!   endif
+
+   !XXX This works, but we need a better way to print the loop progress
+   if(modulo(i,dpart)==0) then
+      !$omp critical
+      write(*,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
+      write(11,*) 'PART ',cntid, iq1, ' done by process ',rank,' in ', trim(hname), ' with thread ', omp_get_thread_num()
+      write(11,*) 'a5'
+      flush(11)
+      !$omp end critical
+      !write(*,*) i, ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+      !write(11,*) i, ' done by proc ',rank,' in ', trim(hname), ' with thr ', omp_get_thread_num()
+      !flush(11)
+   endif   
    
    lp_jq1: do jq1=iq1-jq1m,iq1+jq1m
       if(jq1>nc1.or.jq1<1) cycle lp_jq1
@@ -4895,6 +5444,8 @@ do i=1,npt
 end do
 !$omp end parallel do
 close(11)  ! close log
+call mpi_reduce(cdth, cdthtot, nsep, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
+call mpi_reduce(bcdth, bcdthtot, nbts*nsep, mpi_real8, mpi_sum, 0, mpi_comm_world,ierr)
 write(*,*) ' '
 end subroutine th_Cb
 
