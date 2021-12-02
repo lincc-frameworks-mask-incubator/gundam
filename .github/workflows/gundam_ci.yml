@@ -2,7 +2,7 @@
 # CI with GitHub Actions
 # ==============================================================
 
-name: nada CI
+name: gundam CI
 
 on:
   - push
