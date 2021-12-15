@@ -1,0 +1,13 @@
+START!   12/02/21  13:25:40
+Name of output set to : run001
+Calling Information  ==========================================
+table        = /usr/local/datos/gundam/tests/data/DATA.fits
+table_nrows  = 84383
+table1       = /usr/local/datos/gundam/tests/data/RAND.fits
+table1_nrows = 227336
+nthreads     = 1
+write        = False
+plot         = False
+rank         = 0
+nranks       = 1
+===============================================================
