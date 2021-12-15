@@ -40,7 +40,7 @@ def pcf_ls():
 # threads = 2
 # estimator = NAT
 # bootstrap = False
-@mpi_parallel(1)
+@mpi_parallel(3)
 def test_pcf_nth2_nat(pcf_nat):
     cntoriginal = pcf_nat
     galf = str(RESOURCES_PATH) + '/DATA.fits'  # Galaxy sample
