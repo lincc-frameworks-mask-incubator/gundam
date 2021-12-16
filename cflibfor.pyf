@@ -18,6 +18,9 @@ python module cflibfor ! in
                 real(kind=4) intent(out),dimension(nboot,npt) :: w
             end subroutine bootstrap
 
+            subroutine finishMPI() ! in :cflibfor:cflibfor.f90:mod
+            end subroutine finishMPI
+            
 !==========================================================================================
 !   COUNTING ROUTINES - 3D SPHERICAL (projected)
 !==========================================================================================
@@ -32,7 +35,7 @@ python module cflibfor ! in
                 integer intent(out),dimension(npt),depend(npt) :: ll
             end subroutine skll3d
             
-            subroutine rppi_A(nt,npt,dec,dc,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,cntid,logf,sk,ll,aapv) ! in :cflibfor:cflibfor.f90:mod
+            subroutine rppi_A(nt,npt,dec,dc,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,cntid,logf,sk,ll,aapvtot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,mxh1,mxh2,mxh3
                 real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z,dc
                 integer :: nsepp,nsepv
@@ -43,10 +46,10 @@ python module cflibfor ! in
                 character*80 :: logf
                 integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk
                 integer dimension(npt),depend(npt) :: ll
-                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapv
+                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapvtot
             end subroutine rppi_A
 
-            subroutine rppi_A_wg(nt,npt,dec,dc,wei,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk,ll,aapv) ! in :cflibfor:cflibfor.f90:mod
+            subroutine rppi_A_wg(nt,npt,dec,dc,wei,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk,ll,aapvtot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,mxh1,mxh2,mxh3,wfib
                 real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z,dc
                 real(kind=4) dimension(npt),depend(npt) :: wei
@@ -58,10 +61,10 @@ python module cflibfor ! in
                 character*80 :: logf
                 integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk
                 integer dimension(npt),depend(npt) :: ll
-                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapv
+                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapvtot
             end subroutine rppi_A_wg
 
-            subroutine rppi_Ab(nt,npt,dec,dc,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk,ll,aapv,baapv) ! in :cflibfor:cflibfor.f90:mod
+            subroutine rppi_Ab(nt,npt,dec,dc,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk,ll,aapvtot,baapvtot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,mxh1,mxh2,mxh3,nbts,bseed
                 real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z,dc
                 integer :: nsepp,nsepv
@@ -72,11 +75,11 @@ python module cflibfor ! in
                 character*80 :: logf
                 integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk
                 integer dimension(npt),depend(npt) :: ll
-                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapv
-                real(kind=8) intent(out),dimension(nbts,nsepp,nsepv),depend(nbts,nsepp,nsepv) :: baapv
+                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapvtot
+                real(kind=8) intent(out),dimension(nbts,nsepp,nsepv),depend(nbts,nsepp,nsepv) :: baapvtot
             end subroutine rppi_Ab
 
-            subroutine rppi_Ab_wg(nt,npt,dec,dc,wei,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,nbts,bseed,wfib,cntid,logf,sk,ll,aapv,baapv) ! in :cflibfor:cflibfor.f90:mod
+            subroutine rppi_Ab_wg(nt,npt,dec,dc,wei,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,nbts,bseed,wfib,cntid,logf,sk,ll,aapvtot,baapvtot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,mxh1,mxh2,mxh3,nbts,bseed,wfib
                 real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z,dc
                 real(kind=4) dimension(npt),depend(npt) :: wei
@@ -88,11 +91,11 @@ python module cflibfor ! in
                 character*80 :: logf
                 integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk
                 integer dimension(npt),depend(npt) :: ll
-                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapv
-                real(kind=8) intent(out),dimension(nbts,nsepp,nsepv),depend(nbts,nsepp,nsepv) :: baapv
+                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapvtot
+                real(kind=8) intent(out),dimension(nbts,nsepp,nsepv),depend(nbts,nsepp,nsepv) :: baapvtot
             end subroutine rppi_Ab_wg
 
-            subroutine rppi_C(nt,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,cntid,logf,sk1,ll1,cdpv) ! in :cflibfor:cflibfor.f90:mod
+            subroutine rppi_C(nt,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,cntid,logf,sk1,ll1,cdpvtot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,npt1,mxh1,mxh2,mxh3
                 real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z,dc
                 real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1,dc1
@@ -104,10 +107,10 @@ python module cflibfor ! in
                 character*80 :: logf
                 integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk1
                 integer dimension(npt1),depend(npt1) :: ll1
-                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpv
+                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpvtot
             end subroutine rppi_C
            
-            subroutine rppi_C_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk1,ll1,cdpv) ! in :cflibfor:cflibfor.f90:mod
+            subroutine rppi_C_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk1,ll1,cdpvtot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,npt1,mxh1,mxh2,mxh3,wfib
                 real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z,dc
                 real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1,dc1
@@ -121,10 +124,10 @@ python module cflibfor ! in
                 character*80 :: logf
                 integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk1
                 integer dimension(npt1),depend(npt1) :: ll1
-                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpv
+                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpvtot
             end subroutine rppi_C_wg
 
-            subroutine rppi_Cb(nt,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk1,ll1,cdpv,bcdpv) ! in :cflibfor:cflibfor.f90:mod
+            subroutine rppi_Cb(nt,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk1,ll1,cdpv,cdpvtot,bcdpvtot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,npt1,mxh1,mxh2,mxh3,nbts,bseed
                 real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z,dc
                 real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1,dc1
@@ -138,9 +141,11 @@ python module cflibfor ! in
                 integer dimension(npt1),depend(npt1) :: ll1
                 real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpv
                 real(kind=8) intent(out),dimension(nbts,nsepp,nsepv),depend(nbts,nsepp,nsepv) :: bcdpv
+                real(kind=8)  intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpvtot
+                real(kind=8) intent(out),dimension(nbts,nsepp,nsepv),depend(nbts,nsepp,nsepv) :: bcdpvtot
             end subroutine rppi_Cb
 
-            subroutine rppi_Cb_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,nbts,bseed,wfib,cntid,logf,sk1,ll1,cdpv,bcdpv) ! in :cflibfor:cflibfor.f90:mod
+            subroutine rppi_Cb_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,nbts,bseed,wfib,cntid,logf,sk1,ll1,cdpvtot,bcdpvtot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,npt1,mxh1,mxh2,mxh3,nbts,bseed,wfib
                 real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z,dc
                 real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1,dc1
@@ -154,8 +159,8 @@ python module cflibfor ! in
                 character*80 :: logf
                 integer dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk1
                 integer dimension(npt1),depend(npt1) :: ll1
-                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpv
-                real(kind=8) intent(out),dimension(nbts,nsepp,nsepv),depend(nbts,nsepp,nsepv) :: bcdpv
+                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpvtot
+                real(kind=8) intent(out),dimension(nbts,nsepp,nsepv),depend(nbts,nsepp,nsepv) :: bcdpvtot
             end subroutine rppi_Cb_wg
 
 !==========================================================================================
@@ -293,7 +298,7 @@ python module cflibfor ! in
                 integer intent(out),dimension(npt),depend(npt) :: ll
             end subroutine skll2d
 
-            subroutine th_A(nt,npt,dec,x,y,z,nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk,ll,aa) ! in :cflibfor:cflibfor.f90:mod
+            subroutine th_A(nt,npt,dec,x,y,z,nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk,ll,aatot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: npt,nt,nsep,mxh1,mxh2
                 real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z
                 real(kind=8) dimension(nsep + 1),depend(nsep) :: sep
@@ -302,7 +307,7 @@ python module cflibfor ! in
                 character*80 :: logf
                 integer dimension(mxh2,mxh1),depend(mxh2,mxh1) :: sk
                 integer dimension(npt),depend(npt) :: ll
-                real(kind=8) intent(out),dimension(nsep),depend(nsep) :: aa
+                real(kind=8) intent(out),dimension(nsep),depend(nsep) :: aatot                
             end subroutine th_A
 
             subroutine th_A_wg(nt,npt,dec,wei,x,y,z,nsep,sep,sbound,mxh1,mxh2,wfib,cntid,logf,sk,ll,aa) ! in :cflibfor:cflibfor.f90:mod
@@ -318,7 +323,7 @@ python module cflibfor ! in
                 real(kind=8) intent(out),dimension(nsep),depend(nsep) :: aa
             end subroutine th_A_wg
 
-            subroutine th_Ab(nt,npt,dec,x,y,z,nsep,sep,sbound,mxh1,mxh2,nbts,bseed,cntid,logf,sk,ll,aa,baa) ! in :cflibfor:cflibfor.f90:mod
+            subroutine th_Ab(nt,npt,dec,x,y,z,nsep,sep,sbound,mxh1,mxh2,nbts,bseed,cntid,logf,sk,ll,aatot,baatot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: npt,nt,nsep,mxh1,mxh2,nbts,bseed
                 real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z
                 real(kind=8) dimension(nsep + 1),depend(nsep) :: sep
@@ -327,8 +332,8 @@ python module cflibfor ! in
                 character*80 :: logf
                 integer dimension(mxh2,mxh1),depend(mxh2,mxh1) :: sk
                 integer dimension(npt),depend(npt) :: ll
-                real(kind=8) intent(out),dimension(nsep),depend(nsep) :: aa
-                real(kind=8) intent(out),dimension(nbts,nsep),depend(nbts,nsep) :: baa
+                real(kind=8) intent(out),dimension(nsep),depend(nsep) :: aatot
+                real(kind=8) intent(out),dimension(nbts,nsep),depend(nbts,nsep) :: baatot                
             end subroutine th_Ab
 
             subroutine th_Ab_wg(nt,npt,dec,wei,x,y,z,nsep,sep,sbound,mxh1,mxh2,nbts,bseed,wfib,cntid,logf,sk,ll,aa,baa) ! in :cflibfor:cflibfor.f90:mod
@@ -345,7 +350,7 @@ python module cflibfor ! in
                 real(kind=8) intent(out),dimension(nbts,nsep),depend(nbts,nsep) :: baa
             end subroutine th_Ab_wg
 
-            subroutine th_C(nt,npt,ra,dec,x,y,z,npt1,x1,y1,z1,nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk1,ll1,cdth) ! in :cflibfor:cflibfor.f90:mod
+            subroutine th_C(nt,npt,ra,dec,x,y,z,npt1,x1,y1,z1,nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk1,ll1,cdthtot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,npt1,mxh1,mxh2,nsep
                 real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z
                 real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1
@@ -355,7 +360,7 @@ python module cflibfor ! in
                 character*80 :: logf
                 integer dimension(mxh2,mxh1),depend(mxh2,mxh1) :: sk1
                 integer dimension(npt1),depend(npt1) :: ll1
-                real(kind=8) intent(out),dimension(nsep),depend(nsep) :: cdth
+                real(kind=8) intent(out),dimension(nsep),depend(nsep) :: cdthtot
             end subroutine th_C
 
             subroutine th_C_wg(nt,npt,ra,dec,wei,x,y,z,npt1,wei,x1,y1,z1,nsep,sep,sbound,mxh1,mxh2,wfib,cntid,logf,sk1,ll1,cdth) ! in :cflibfor:cflibfor.f90:mod
@@ -373,7 +378,7 @@ python module cflibfor ! in
                 real(kind=8) intent(out),dimension(nsep),depend(nsep) :: cdth
             end subroutine th_C_wg
 
-            subroutine th_Cb(nt,npt,ra,dec,x,y,z,npt1,x1,y1,z1,nsep,sep,sbound,mxh1,mxh2,nbts,bseed,cntid,logf,sk1,ll1,cdth,bcdth) ! in :cflibfor:cflibfor.f90:mod
+            subroutine th_Cb(nt,npt,ra,dec,x,y,z,npt1,x1,y1,z1,nsep,sep,sbound,mxh1,mxh2,nbts,bseed,cntid,logf,sk1,ll1,cdthtot,bcdthtot) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,npt1,mxh1,mxh2,nsep,nbts,bseed
                 real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z
                 real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1
@@ -383,8 +388,8 @@ python module cflibfor ! in
                 character*80 :: logf
                 integer dimension(mxh2,mxh1),depend(mxh2,mxh1) :: sk1
                 integer dimension(npt1),depend(npt1) :: ll1
-                real(kind=8) intent(out),dimension(nsep),depend(nsep) :: cdth
-                real(kind=8) intent(out),dimension(nbts,nsep),depend(nbts,nsep) :: bcdth
+                real(kind=8) intent(out),dimension(nsep),depend(nsep) :: cdthtot
+                real(kind=8) intent(out),dimension(nbts,nsep),depend(nbts,nsep) :: bcdthtot
             end subroutine th_Cb
 
             subroutine th_Cb_wg(nt,npt,ra,dec,wei,x,y,z,npt1,wei1,x1,y1,z1,nsep,sep,sbound,mxh1,mxh2,nbts,bseed,wfib,cntid,logf,sk1,ll1,cdth,bcdth) ! in :cflibfor:cflibfor.f90:mod
@@ -403,6 +408,11 @@ python module cflibfor ! in
                 real(kind=8) intent(out),dimension(nbts,nsep),depend(nbts,nsep) :: bcdth
             end subroutine th_Cb_wg
 
+            subroutine r_nada(a,b,c,d) ! in :cflibfor:cflibfor.f90:mod
+                integer :: a,b,c
+                real(kind=8) intent(out),dimension(b,a) :: d
+            end subroutine r_nada
+            
         end module    
     end interface 
 end python module cflibfor
