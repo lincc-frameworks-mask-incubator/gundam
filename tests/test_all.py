@@ -40,7 +40,7 @@ def pcf_ls():
 # threads = 2
 # estimator = NAT
 # bootstrap = False
-# @mpi_parallel(1)
+@mpi_parallel(1)
 def test_pcf_nth2_nat(pcf_nat):
     cntoriginal = pcf_nat
     galf = str(RESOURCES_PATH) + '/DATA.fits'  # Galaxy sample
@@ -67,7 +67,7 @@ def test_pcf_nth2_nat(pcf_nat):
     gals["wei"] = 1.0  # If not present, set weights to 1
     rans = Table.read(ranf)
     rans["wei"] = 1.0  # If not present, set weights to 1
-    cntnew = gun.pcf(gals, rans, par, nthreads=2, plot=False, write=False)
+    cntnew = gun.pcf(gals, rans, par, nthreads=1, plot=False, write=False)
     npt.assert_array_equal(cntnew.dd, cntoriginal.dd)
     npt.assert_array_equal(cntnew.rr, cntoriginal.rr)
     npt.assert_array_equal(cntnew.wrp, cntoriginal.wrp)
@@ -77,7 +77,7 @@ def test_pcf_nth2_nat(pcf_nat):
 # threads = 2
 # estimator = HAM
 # bootstrap = False
-# @mpi_parallel(1)
+@mpi_parallel(1)
 def test_pcf_nth2_ham(pcf_ham):
     cntoriginal = pcf_ham
     galf = str(RESOURCES_PATH) + '/DATA.fits'   # Galaxy sample
