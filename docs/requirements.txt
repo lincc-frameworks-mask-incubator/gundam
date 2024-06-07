@@ -1,0 +1,8 @@
+ipykernel
+ipython
+jupytext
+nbconvert
+nbsphinx
+sphinx
+sphinx-copybutton
+sphinx-rtd-theme

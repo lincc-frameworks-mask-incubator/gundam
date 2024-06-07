@@ -2,7 +2,7 @@
 ! Note: the context of this file is case sensitive.
 
 
-python module cflibfor ! in 
+python module cflibfor ! in
     interface  ! in :cflibfor
         module mod ! in :cflibfor:cflibfor.f90
             !use cosmolib
@@ -31,7 +31,7 @@ python module cflibfor ! in
                 integer intent(out),dimension(mxh3,mxh2,mxh1),depend(mxh3,mxh2,mxh1) :: sk
                 integer intent(out),dimension(npt),depend(npt) :: ll
             end subroutine skll3d
-            
+
             subroutine rppi_A(nt,npt,dec,dc,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,cntid,logf,sk,ll,aapv) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,mxh1,mxh2,mxh3
                 real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z,dc
@@ -106,7 +106,7 @@ python module cflibfor ! in
                 integer dimension(npt1),depend(npt1) :: ll1
                 real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpv
             end subroutine rppi_C
-           
+
             subroutine rppi_C_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk1,ll1,cdpv) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,npt1,mxh1,mxh2,mxh3,wfib
                 real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z,dc
@@ -280,7 +280,7 @@ python module cflibfor ! in
                 real(kind=8) intent(out),dimension(nbts,nseps),depend(nbts,nseps) :: bcds
             end subroutine s_Cb_wg
 
-            
+
 !==========================================================================================
 !   COUNTING ROUTINES - 2D SPHERICAL
 !==========================================================================================
@@ -403,8 +403,8 @@ python module cflibfor ! in
                 real(kind=8) intent(out),dimension(nbts,nsep),depend(nbts,nsep) :: bcdth
             end subroutine th_Cb_wg
 
-        end module    
-    end interface 
+        end module
+    end interface
 end python module cflibfor
 
 ! This file was auto-generated with f2py (version:2).

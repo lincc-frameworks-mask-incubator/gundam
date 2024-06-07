@@ -48,13 +48,13 @@ The following images illustrate how pixel sorting rearranges a list of ra-dec
 coordinates into nearby patches. The vertical axis is the index of the ra-dec 
 point in the list (in log scale for clarity).
 
-.. figure:: onatural.png
+.. figure:: images/onatural.png
     :scale: 70%
     :alt: Natural pixel ordering
 
     Natural pixel ordering
 
-.. figure:: omorton.png
+.. figure:: images/omorton.png
     :scale: 70%
     :alt: Morton pixel ordering
 

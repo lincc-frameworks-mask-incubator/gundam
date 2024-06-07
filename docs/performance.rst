@@ -14,20 +14,20 @@ We show here the effect of sorting the data into convenient cells or *pixels*
 before counting pairs, and the effect of choosing a good grid size for samples
 of increasing density.
 
-.. image:: bench_rppiA_plot2.png
+.. image:: images/bench_rppiA_plot2.png
     :scale: 60%
     :alt: DD(rp,pi) performance2
 
 Now we compare with one of the fastest publicity available codes 
 (`corrfunc <https://github.com/manodeep/Corrfunc/>`_)
     
-.. image:: bench_rppiA_plot1.png
+.. image:: images/bench_rppiA_plot1.png
     :scale: 60%
     :alt: DD(rp,pi) performance1
 
 And now we compare the performance with *n* threads running in parallel
 
-.. image:: benchMP_plot1.png
+.. image:: images/benchMP_plot1.png
     :scale: 60%
     :alt: DD(rp,pi) performance3
 

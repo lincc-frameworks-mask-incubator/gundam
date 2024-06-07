@@ -19,6 +19,7 @@ Contents:
    out
    pxorder
    performance
+   notebooks
    api
 
 Indices and tables
