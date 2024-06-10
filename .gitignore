@@ -6,6 +6,25 @@ __pycache__/
 # C extensions
 *.so
 
+# Files output by Gundam by default
+.pik
+.cnt
+.log
+.par
+.rppi
+.dd
+.rr
+.dr
+.wrp
+.xis
+.wth
+.cd
+.cr
+.pdf
+
+# Test outputs
+tests/data/ex_*
+
 # Distribution / packaging
 .Python
 build/
@@ -149,6 +168,3 @@ _html/
 
 # Project initialization script
 .initialize_new_project.sh
-
-# Test outputs
-tests/data/ex_*
