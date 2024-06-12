@@ -16,7 +16,7 @@ mypy_type_checking: none
 package_name: gundam
 project_license: none
 project_name: gundam
-project_organization: samotracio
+project_organization: lincc-frameworks-mask-incubator
 python_versions:
 - '3.9'
 - '3.10'

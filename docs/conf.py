@@ -17,7 +17,13 @@ version = ".".join(release.split(".")[:2])
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-extensions = ["sphinx.ext.mathjax", "sphinx.ext.napoleon", "sphinx.ext.viewcode", "nbsphinx", "sphinx_copybutton"]
+extensions = [
+    "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "nbsphinx",
+    "sphinx_copybutton",
+]
 
 ## sets up the expected prompt text from console blocks, and excludes it from
 ## the text that goes into the clipboard.

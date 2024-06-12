@@ -3,8 +3,8 @@
 [![Template](<https://img.shields.io/badge/Template-LINCC%20Frameworks%20Python%20Project%20Template-brightgreen>)](<https://lincc-ppt.readthedocs.io/en/latest/>)
 [![PyPI](<https://img.shields.io/pypi/v/gundam?color=blue&logo=pypi&logoColor=white>)](<https://pypi.org/project/gundam/>)
 [![Read the Docs](<https://img.shields.io/readthedocs/gundam>)](<https://gundam.readthedocs.io/>)
-[![Tests Status](https://img.shields.io/github/actions/workflow/status/samotracio/gundam/smoke-test.yml)](<https://github.com/samotracio/gundam/actions/workflows/smoke-test.yml>)
-[![Coverage Status](https://codecov.io/gh/samotracio/gundam/branch/main/graph/badge.svg)](<https://codecov.io/gh/samotracio/gundam>)
+[![Tests Status](https://img.shields.io/github/actions/workflow/status/lincc-frameworks-mask-incubator/gundam/smoke-test.yml)](<https://github.com/lincc-frameworks-mask-incubator/gundam/actions/workflows/smoke-test.yml>)
+[![Coverage Status](https://codecov.io/gh/lincc-frameworks-mask-incubator/gundam/branch/main/graph/badge.svg)](<https://codecov.io/gh/lincc-frameworks-mask-incubator/gundam>)
 
 A package to count galaxy pairs at light speed and estimate 2-point correlation functions 
 of large galaxy samples or mock catalogs, that works with angular, projected and
@@ -88,32 +88,28 @@ if experimenting with different orderings)
 
 ### Installing
 
-To install Gundam, you have two choices: (1) build from scratch, or (2) use pip. 
-I recommend method (1), since it will allow easy access to modify or extend the 
-Fortran counting routines. In any case, make sure to fulfil the required 
-dependencies. Option 2 using pip is not yet functional.
+To install Gundam, you have two choices: (1) use pip, or (2) build from scratch. 
+Method (1) is useful if you simply want to use gundam. Method (2) on the other hand
+allows easy access to modify or extend the Fortran counting routines.
 
-You just need to clone the Gundam repository and type make
+To install via pip execute:
 
 ```
-git clone https://github.com/el_samotracio/gundam.git
+pip install gundam
+```
+
+If you want to contribute to the package, you need to clone the Gundam repository
+and install with the "dev" optional dependencies.
+
+```
+git clone https://github.com/lincc-frameworks-mask-incubator/gundam.git
 cd gundam
-make
+pip install -e .'[dev]'
+pre-commit install
 ```
 
-By default this will compile and build the library in-place. Feel free to modify 
-the Makefile to suit your needs. After compilation, you can optionally install 
-the library in your default global-site packages directory
-
-```
-python setup.py install
-```
-
-or in your default user packages directory
-
-```
-python setup.py install --user
-```
+By default, this will compile and build the library in-place. Feel free to modify 
+the CMakeLists file to suit your needs.
 
 ## Contributing
 
