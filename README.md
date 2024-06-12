@@ -1,4 +1,10 @@
-# <img src="./docs/banner.png">
+# <img src="./docs/images/banner.png">
+
+[![Template](<https://img.shields.io/badge/Template-LINCC%20Frameworks%20Python%20Project%20Template-brightgreen>)](<https://lincc-ppt.readthedocs.io/en/latest/>)
+[![PyPI](<https://img.shields.io/pypi/v/gundam?color=blue&logo=pypi&logoColor=white>)](<https://pypi.org/project/gundam/>)
+[![Read the Docs](<https://img.shields.io/readthedocs/gundam>)](<https://gundam.readthedocs.io/>)
+[![Tests Status](https://img.shields.io/github/actions/workflow/status/samotracio/gundam/smoke-test.yml)](<https://github.com/samotracio/gundam/actions/workflows/smoke-test.yml>)
+[![Coverage Status](https://codecov.io/gh/samotracio/gundam/branch/main/graph/badge.svg)](<https://codecov.io/gh/samotracio/gundam>)
 
 A package to count galaxy pairs at light speed and estimate 2-point correlation functions 
 of large galaxy samples or mock catalogs, that works with angular, projected and
@@ -67,7 +73,7 @@ repo (*example_lrg.py*, *example_pcf.py* and *example_redblue.py*). For the mome
 these are couple plots to illustrate what can be done with Gundam in just a few 
 lines of code  
 
-<img src="./docs/image01.png" width="350"> &nbsp;&nbsp;&nbsp; <img src="./docs/image02.png" width="350">
+<img src="./docs/images/image01.png" width="350"> &nbsp;&nbsp;&nbsp; <img src="./docs/images/image02.png" width="350">
     
 ### Prerequisites
 
@@ -119,6 +125,6 @@ Please read [CONTRIBUTING](CONTRIBUTING.md) for details on our code of conduct, 
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
 

@@ -108,7 +108,7 @@ respectively.
 A plot is worth a thousand words, so let's do a good graphic of :math:`w(r_p)`
 by typing :code:`gun.cntplot(cnt, factor=2.)` (the 2x factor is due to xxxx)
     
-.. image:: cf01.png
+.. image:: images/cf01.png
     :scale: 70%
     :alt: Example plot of a projected correlation function
 
@@ -169,7 +169,7 @@ in /examples directory)
 which produces this cool figure. Anything familiar? Perhaps the Fingers of God?
 Kaiser squashing?
 
-.. image:: cf02.png
+.. image:: images/cf02.png
     :scale: 100%
     :alt: Example plot of a 2D projected correlation function
 
@@ -208,20 +208,20 @@ Again, there are two ways to go around:
 
     * Use :func:`gun.qprint` method
 
-        .. image:: qprintyes.png
+        .. image:: images/qprintyes.png
             :scale: 100%
             :alt: Example of qprint() to display Munch dictionaries
 
         
     * Use :func:`gun.cnttable` routine to pop up a table of counts in your browser
     
-        .. image:: cnttable.png
+        .. image:: images/cnttable.png
             :scale: 80%
             :alt: Example of cnttable() to display Munch dictionaries
 
 Or you can always try your luck using (i)python regular print
 
-.. image:: qprintno.png
+.. image:: images/qprintno.png
     :scale: 100%
     :alt: Example of regular display of Munch dictionaries
 
