@@ -96,7 +96,7 @@ dependencies. Option 2 using pip is not yet functional.
 You just need to clone the Gundam repository and type make
 
 ```
-git clone https://github.com/el_samotracio/gundam.git
+git clone https://github.com/lincc-frameworks-mask-incubator/gundam.git
 cd gundam
 make
 ```

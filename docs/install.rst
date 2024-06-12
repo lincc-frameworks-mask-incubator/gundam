@@ -17,7 +17,7 @@ Just install the required dependencies, clone the Gundam repository and type `ma
 
 .. code:: 
           
-	  git clone https://github.com/el_samotracio/gundam.git
+	  git clone https://github.com/lincc-frameworks-mask-incubator/gundam.git
 	  cd gundam
 	  make
 
