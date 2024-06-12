@@ -88,32 +88,29 @@ if experimenting with different orderings)
 
 ### Installing
 
-To install Gundam, you have two choices: (1) build from scratch, or (2) use pip. 
-I recommend method (1), since it will allow easy access to modify or extend the 
-Fortran counting routines. In any case, make sure to fulfil the required 
-dependencies. Option 2 using pip is not yet functional.
+To install Gundam, you have two choices: (1) use pip, or (2) build from scratch. 
+Method (1) is useful if you simply want to use gundam. Method (2) on the other hand
+allows easy access to modify or extend the Fortran counting routines. In any case, 
+make sure to fulfill the required dependencies.
 
-You just need to clone the Gundam repository and type make
+To install gundam via pip execute:
+
+```
+pip install gundam
+```
+
+If you want to contribute to the package, you need to clone the Gundam repository
+and install with the "dev" optional dependencies.
 
 ```
 git clone https://github.com/lincc-frameworks-mask-incubator/gundam.git
 cd gundam
-make
+pip install -e .'[dev]'
+pre-commit install
 ```
 
 By default this will compile and build the library in-place. Feel free to modify 
-the Makefile to suit your needs. After compilation, you can optionally install 
-the library in your default global-site packages directory
-
-```
-python setup.py install
-```
-
-or in your default user packages directory
-
-```
-python setup.py install --user
-```
+the CMakeLists file to suit your needs.
 
 ## Contributing
 
