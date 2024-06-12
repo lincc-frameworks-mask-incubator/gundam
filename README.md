@@ -90,10 +90,9 @@ if experimenting with different orderings)
 
 To install Gundam, you have two choices: (1) use pip, or (2) build from scratch. 
 Method (1) is useful if you simply want to use gundam. Method (2) on the other hand
-allows easy access to modify or extend the Fortran counting routines. In any case, 
-make sure to fulfill the required dependencies.
+allows easy access to modify or extend the Fortran counting routines.
 
-To install gundam via pip execute:
+To install via pip execute:
 
 ```
 pip install gundam
@@ -109,7 +108,7 @@ pip install -e .'[dev]'
 pre-commit install
 ```
 
-By default this will compile and build the library in-place. Feel free to modify 
+By default, this will compile and build the library in-place. Feel free to modify 
 the CMakeLists file to suit your needs.
 
 ## Contributing
