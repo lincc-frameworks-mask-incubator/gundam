@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C Fortran)
 
 find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
