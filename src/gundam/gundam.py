@@ -2867,7 +2867,7 @@ def pixsort(tab, colnms, par):
         pxra = np.digitize(tab[cra].data, bins=binsra)  # opt. add as column tab['pxra']
         binsdec = np.linspace(decmin, decmax, num=par.mxh1)
         pxdec = np.digitize(tab[cdec].data, bins=binsdec)  # opt. add as column tab['pxdec']
-        binsred = np.linspace(zmin, zmax, num=np.int(par.mxh3))  # num=par.mxh3*10
+        binsred = np.linspace(zmin, zmax, num=np.int_(par.mxh3))  # num=par.mxh3*10
         pxred = np.digitize(tab[cred].data, bins=binsred)  # opt. add as column tab['pxred']
 
         # CHOOSE THE ORDERING METHOD  ================================
@@ -3039,11 +3039,11 @@ def bestSKgrid2d(par, npts, ras, dens=None):
     # Choose mxh1  ------------------------------
     if par.kind in ["thA", "thC"]:  # potentially tune for thC case
         # Based on the fitting of a+b*sqrt(n) to n vs best_mhx1 for thA case
-        h1 = max(np.int(np.rint(10.75 + 0.075 * np.sqrt(npts))), 1)
+        h1 = max(np.int_(np.rint(10.75 + 0.075 * np.sqrt(npts))), 1)
 
     # Choose mxh2  ------------------------------
     # Set to reach the target density (last factor is to extend to 360 range)
-    h2 = np.int(np.rint(h1h2 / h1) * (360.0 / samplewidth))
+    h2 = np.int_(np.rint(h1h2 / h1) * (360.0 / samplewidth))
 
     # Implement some (min,max) safeguards in h1,h2 ?
     return [h1, h2, dens]
@@ -3116,21 +3116,21 @@ def bestSKgrid3d(par, npts, ras, dens=None):
         radmax = makebins(par.nsepv, 0.0, par.dsepv, 0)[0][-1]
     elif par.kind in ["sA", "sC"]:
         radmax = makebins(par.nseps, par.sepsmin, par.dseps, par.logseps)[0][-1]
-    h3 = np.int((dcmax - dcmin) / radmax)
+    h3 = np.int_((dcmax - dcmin) / radmax)
 
     h1h2 = npts / (dens * h3)  # Combined h1h2
 
     # Choose mxh1  ------------------------------
     if par.kind in ["rppiA", "rppiC"]:
         # Based on the fitting of a+b*sqrt(n) to n vs best_mhx1 of rrpiA
-        h1 = max(np.int(np.rint(2.92 + 0.05 * np.sqrt(npts))), 1)
+        h1 = max(np.int_(np.rint(2.92 + 0.05 * np.sqrt(npts))), 1)
     elif par.kind in ["sA", "sC"]:
         # Based on the fitting of a+b*sqrt(n) to n vs best_mhx1 if sA
-        h1 = max(np.int(np.rint(4.03 + 0.03 * np.sqrt(npts))), 1)
+        h1 = max(np.int_(np.rint(4.03 + 0.03 * np.sqrt(npts))), 1)
 
     # Choose mxh2  ------------------------------
     # Set to reach the target density (last factor is to extend to 360 range)
-    h2 = np.int(np.rint(h1h2 / h1) * (360.0 / samplewidth))
+    h2 = np.int_(np.rint(h1h2 / h1) * (360.0 / samplewidth))
 
     # Implement some (min,max) safeguards in h1,h2,h3 ?
     return [h1, h2, h3, dens]
@@ -4017,7 +4017,7 @@ def rppi_A(tab, par, nthreads=-1, write=True, plot=False, **kwargs):
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
     par.cntid = "DD"
-    log.info("====  Counting " + par.cntid + " pairs in " + np.str(par.mxh1) + " DEC bands  =====")
+    log.info("====  Counting " + par.cntid + " pairs in " + str(par.mxh1) + " DEC bands  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -4204,7 +4204,7 @@ def rppi_C(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
     par.cntid = "DR"
-    log.info("====  Counting " + par.cntid + " pairs in " + np.str(par.mxh1) + " DEC bands")
+    log.info("====  Counting " + par.cntid + " pairs in " + str(par.mxh1) + " DEC bands")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -4423,7 +4423,7 @@ def pcf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
 
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
-    log.info("====  Counting " + par_dd.cntid + " pairs in " + np.str(par_dd.mxh1) + " DEC strips  =====")
+    log.info("====  Counting " + par_dd.cntid + " pairs in " + str(par_dd.mxh1) + " DEC strips  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -4433,7 +4433,7 @@ def pcf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     tacc = tend - tstart
 
     if par.estimator not in ("DP"):
-        log.info("====  Counting " + par_rr.cntid + " pairs in " + np.str(par_rr.mxh1) + " DEC strips  =====")
+        log.info("====  Counting " + par_rr.cntid + " pairs in " + str(par_rr.mxh1) + " DEC strips  =====")
         if runspyder:
             log.info("      [for progress updates check " + logff + "]")
         tstart = time.time()
@@ -4443,7 +4443,7 @@ def pcf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
         tacc = tacc + (tend - tstart)
 
     if par.estimator in ("HAM", "DP", "LS"):
-        log.info("====  Counting " + par_dr.cntid + " pairs in " + np.str(par_dr.mxh1) + " DEC strips  =====")
+        log.info("====  Counting " + par_dr.cntid + " pairs in " + str(par_dr.mxh1) + " DEC strips  =====")
         if runspyder:
             log.info("      [for progress updates check " + logff + "]")
         tstart = time.time()
@@ -4685,7 +4685,7 @@ def pccf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
 
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
-    log.info("====  Counting " + par_cd.cntid + " pairs in " + np.str(par_cd.mxh1) + " DEC strips  =====")
+    log.info("====  Counting " + par_cd.cntid + " pairs in " + str(par_cd.mxh1) + " DEC strips  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -4694,7 +4694,7 @@ def pccf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
     logtimming(log, par_cd.cntid, tend - tstart)
     tacc = tend - tstart
 
-    log.info("====  Counting " + par_cr.cntid + " pairs in " + np.str(par_cr.mxh1) + " DEC strips  =====")
+    log.info("====  Counting " + par_cr.cntid + " pairs in " + str(par_cr.mxh1) + " DEC strips  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -4862,7 +4862,7 @@ def s_A(tab, par, nthreads=-1, write=True, para=False, plot=False, **kwargs):
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
     par.cntid = "DD"
-    log.info("====  Counting " + par.cntid + " pairs in " + np.str(par.mxh1) + " DEC bands  =====")
+    log.info("====  Counting " + par.cntid + " pairs in " + str(par.mxh1) + " DEC bands  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -5044,7 +5044,7 @@ def s_C(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
     par.cntid = "DR"
-    log.info("====  Counting " + par.cntid + " pairs in " + np.str(par.mxh1) + " DEC bands  =====")
+    log.info("====  Counting " + par.cntid + " pairs in " + str(par.mxh1) + " DEC bands  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -5268,7 +5268,7 @@ def rcf(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
 
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
-    log.info("====  Counting " + par_dd.cntid + " pairs in " + np.str(par_dd.mxh1) + " DEC strips  =====")
+    log.info("====  Counting " + par_dd.cntid + " pairs in " + str(par_dd.mxh1) + " DEC strips  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -5278,7 +5278,7 @@ def rcf(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
     tacc = tend - tstart
 
     if par.estimator not in ("DP"):
-        log.info("====  Counting " + par_rr.cntid + " pairs in " + np.str(par_rr.mxh1) + " DEC strips  =====")
+        log.info("====  Counting " + par_rr.cntid + " pairs in " + str(par_rr.mxh1) + " DEC strips  =====")
         if runspyder:
             log.info("      [for progress updates check " + logff + "]")
         tstart = time.time()
@@ -5288,7 +5288,7 @@ def rcf(tab, tab1, par, nthreads=-1, write=True, para=False, plot=False, **kwarg
         tacc = tacc + (tend - tstart)
 
     if par.estimator in ("HAM", "DP", "LS"):
-        log.info("====  Counting " + par_dr.cntid + " pairs in " + np.str(par_dr.mxh1) + " DEC strips  =====")
+        log.info("====  Counting " + par_dr.cntid + " pairs in " + str(par_dr.mxh1) + " DEC strips  =====")
         if runspyder:
             log.info("      [for progress updates check " + logff + "]")
         tstart = time.time()
@@ -5531,7 +5531,7 @@ def rccf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
 
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
-    log.info("====  Counting " + par_cd.cntid + " pairs in " + np.str(par_cd.mxh1) + " DEC strips  =====")
+    log.info("====  Counting " + par_cd.cntid + " pairs in " + str(par_cd.mxh1) + " DEC strips  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -5540,7 +5540,7 @@ def rccf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
     logtimming(log, par_cd.cntid, tend - tstart)
     tacc = tend - tstart
 
-    log.info("====  Counting " + par_cr.cntid + " pairs in " + np.str(par_cr.mxh1) + " DEC strips  =====")
+    log.info("====  Counting " + par_cr.cntid + " pairs in " + str(par_cr.mxh1) + " DEC strips  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -5705,7 +5705,7 @@ def th_A(tab, par, nthreads=-1, write=True, plot=False, **kwargs):
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
     par.cntid = "DD"
-    log.info("====  Counting " + par.cntid + " pairs in " + np.str(par.mxh1) + " DEC bands  =====")
+    log.info("====  Counting " + par.cntid + " pairs in " + str(par.mxh1) + " DEC bands  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -5867,7 +5867,7 @@ def th_C(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
     par.cntid = "DR"
-    log.info("====  Counting " + par.cntid + " pairs in " + np.str(par.mxh1) + " DEC bands")
+    log.info("====  Counting " + par.cntid + " pairs in " + str(par.mxh1) + " DEC bands")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -6049,7 +6049,7 @@ def acf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
 
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
-    log.info("====  Counting " + par_dd.cntid + " pairs in " + np.str(par_dd.mxh1) + " DEC strips  =====")
+    log.info("====  Counting " + par_dd.cntid + " pairs in " + str(par_dd.mxh1) + " DEC strips  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -6059,7 +6059,7 @@ def acf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     tacc = tend - tstart
 
     if par.estimator not in ("DP"):
-        log.info("====  Counting " + par_rr.cntid + " pairs in " + np.str(par_rr.mxh1) + " DEC strips  =====")
+        log.info("====  Counting " + par_rr.cntid + " pairs in " + str(par_rr.mxh1) + " DEC strips  =====")
         if runspyder:
             log.info("      [for progress updates check " + logff + "]")
         tstart = time.time()
@@ -6069,7 +6069,7 @@ def acf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
         tacc = tacc + (tend - tstart)
 
     if par.estimator in ("HAM", "DP", "LS"):
-        log.info("====  Counting " + par_dr.cntid + " pairs in " + np.str(par_dr.mxh1) + " DEC strips  =====")
+        log.info("====  Counting " + par_dr.cntid + " pairs in " + str(par_dr.mxh1) + " DEC strips  =====")
         if runspyder:
             log.info("      [for progress updates check " + logff + "]")
         tstart = time.time()
@@ -6279,7 +6279,7 @@ def accf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
 
     # ==========================================================================
     # ==========================   COUNT PAIRS   ===============================
-    log.info("====  Counting " + par_cd.cntid + " pairs in " + np.str(par_cd.mxh1) + " DEC strips  =====")
+    log.info("====  Counting " + par_cd.cntid + " pairs in " + str(par_cd.mxh1) + " DEC strips  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()
@@ -6288,7 +6288,7 @@ def accf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
     logtimming(log, par_cd.cntid, tend - tstart)
     tacc = tend - tstart
 
-    log.info("====  Counting " + par_cr.cntid + " pairs in " + np.str(par_cr.mxh1) + " DEC strips  =====")
+    log.info("====  Counting " + par_cr.cntid + " pairs in " + str(par_cr.mxh1) + " DEC strips  =====")
     if runspyder:
         log.info("      [for progress updates check " + logff + "]")
     tstart = time.time()

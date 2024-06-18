@@ -15,7 +15,7 @@ classifiers = [
 dynamic = ["version"]
 requires-python = ">=3.9, <3.12"
 dependencies = [
-    "numpy==1.23",
+    "numpy<2",
     "matplotlib",
     "astropy",
     "scipy",
@@ -37,7 +37,7 @@ dev = [
 ]
 
 [build-system]
-requires = ["scikit-build-core", "numpy==1.23"]
+requires = ["scikit-build-core", "numpy<2"]
 build-backend = "scikit_build_core.build"
 
 [tool.pytest.ini_options]
