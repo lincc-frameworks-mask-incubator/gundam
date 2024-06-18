@@ -4353,7 +4353,7 @@ end subroutine th_Ab_wg
 
 
 subroutine th_C(nt,npt,ra,dec,x,y,z,npt1,x1,y1,z1, &
-                nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk1,ll1,cdth)
+                nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk1,ll1,grid,cdth)
 !===============================================================================
 ! NAME
 !  th_C()
@@ -4395,7 +4395,7 @@ real(kind=8) :: ra(npt),dec(npt),ral,rau,decl,decu,hc1,hc2,shth2,stm2,dltra,dltd
 real(kind=8) :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1) 
 real(kind=8) :: sep(nsep+1),sep2(nsep+1),sbound(4),sep2max,xi,yi,zi
 real(kind=8) :: cdth(nsep)
-integer      :: nt,nthr,sk1(mxh2,mxh1),ll1(npt1),mxh1,mxh2,npt,npt1,nsep,ndp
+integer      :: nt,nthr,sk1(mxh2,mxh1),ll1(npt1),mxh1,mxh2,npt,npt1,nsep,ndp,grid
 integer      :: fracp,dpart,nadv,nc1,nc2,i,ii,j,iq1,iq2,p1,p2,jq1,jq2,jq1m
 integer      :: jq2m,jq2max,jq2min,jq2t
 character    :: cntid*2,logf*80
@@ -4439,88 +4439,127 @@ jq1m  = int(dltdec/hc1)+1
 ! Count pairs in SK grid
 write(*,*) ' '
 write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC strips'
-!$omp parallel do reduction(+:cdth) default(shared) &
-!$omp& private(iq1,iq2,jq1,jq2) &
-!$omp& private(dltra,jq2m,jq2min,jq2max,jq2t,j,i,xi,yi,zi,shth2,ii,fracp,p1,p2) &
-!$omp& schedule(guided) if(nthr>1)
-
-do i=1,npt
-   iq1 = int((dec(i)-decl)/hc1)+1
-   iq2 = int((ra(i)-ral)/hc2)+1
-   fracp = fracp + 1  ! accumulate particles and check when above the step size
-   if(fracp>=dpart) then
-       !$omp critical
-       nadv = nadv + 1
-       !omp flush (nadv)
-       p1   = (nadv-1)*dpart + 1
-       p2   = nadv*dpart
-       if((nadv+1)*dpart>npt) p2=npt
-       !note we are not really counting in mxh1 strips, just mymicking
-       write(*,fmt="(i4)",advance='no') nadv                        ! for screen
-       write(11,*) cntid//' counting in DEC strip > ',nadv,' (',p1,'-',p2,')' !for disk
-       flush(11)
-       fracp = 0
-       !$omp end critical
-   endif
-   lp_jq1: do jq1=iq1-jq1m,iq1+jq1m
-      if(jq1>nc1.or.jq1<1) cycle lp_jq1
-      if(jq1==iq1) then
-         dltra = dalp(stm2,dec(i),dec(i)*deg2rad,jq1,hc1,decl,1)
-      else
-         dltra = dalp(stm2,dec(i),dec(i)*deg2rad,jq1,hc1,decl,0)
-      end if
-      jq2m   = int(dltra/hc2)+1
-      jq2max = iq2+jq2m
-      jq2min = iq2-jq2m
-      if(jq2max-jq2min+1>nc2) jq2max=jq2min-1+nc2
-      lp_jq2: do jq2=jq2min,jq2max
-         if(jq2>nc2) then
-            jq2t = jq2-nc2
-         else if(jq2<1) then
-            jq2t = jq2+nc2
+if (grid==1) then
+   !$omp parallel do reduction(+:cdth) default(shared) &
+   !$omp& private(iq1,iq2,jq1,jq2) &
+   !$omp& private(dltra,jq2m,jq2min,jq2max,jq2t,j,i,xi,yi,zi,shth2,ii,fracp,p1,p2) &
+   !$omp& schedule(guided) if(nthr>1)
+   do i=1,npt
+      iq1 = int((dec(i)-decl)/hc1)+1
+      iq2 = int((ra(i)-ral)/hc2)+1
+      fracp = fracp + 1  ! accumulate particles and check when above the step size
+      if(fracp>=dpart) then
+         !$omp critical
+         nadv = nadv + 1
+         !omp flush (nadv)
+         p1   = (nadv-1)*dpart + 1
+         p2   = nadv*dpart
+         if((nadv+1)*dpart>npt) p2=npt
+         !note we are not really counting in mxh1 strips, just mymicking
+         write(*,fmt="(i4)",advance='no') nadv                        ! for screen
+         write(11,*) cntid//' counting in DEC strip > ',nadv,' (',p1,'-',p2,')' !for disk
+         flush(11)
+         fracp = 0
+         !$omp end critical
+      endif
+      lp_jq1: do jq1=iq1-jq1m,iq1+jq1m
+         if(jq1>nc1.or.jq1<1) cycle lp_jq1
+         if(jq1==iq1) then
+            dltra = dalp(stm2,dec(i),dec(i)*deg2rad,jq1,hc1,decl,1)
          else
-            jq2t = jq2
+            dltra = dalp(stm2,dec(i),dec(i)*deg2rad,jq1,hc1,decl,0)
          end if
-         j = sk1(jq2t,jq1)
-         xi = x(i)
-         yi = y(i)
-         zi = z(i)
+         jq2m   = int(dltra/hc2)+1
+         jq2max = iq2+jq2m
+         jq2min = iq2-jq2m
+         if(jq2max-jq2min+1>nc2) jq2max=jq2min-1+nc2
+         lp_jq2: do jq2=jq2min,jq2max
+            if(jq2>nc2) then
+               jq2t = jq2-nc2
+            else if(jq2<1) then
+               jq2t = jq2+nc2
+            else
+               jq2t = jq2
+            end if
+            j = sk1(jq2t,jq1)
+            xi = x(i)
+            yi = y(i)
+            zi = z(i)
 
-         do while(j/=0)
-            shth2 = (xi-x1(j))**2 + (yi-y1(j))**2 + (zi-z1(j))**2
-            !th = 2.*sqrt(shth2)*180./3.1415
-            if(shth2<=sep2max) then
-                ! Now count the pair by finding its (ii) bin in vector of ang-space bins
-                if(shth2>sep2(nsep)) then
-                    cdth(nsep) = cdth(nsep) + 1.0d0
-                    goto 78
-                endif
-                if(shth2>sep2(nsep-1)) then
-                    cdth(nsep-1) = cdth(nsep-1) + 1.0d0
-                    goto 78
-                endif
-                if(shth2>sep2(nsep-2)) then
-                    cdth(nsep-2) = cdth(nsep-2) + 1.0d0
-                    goto 78
-                endif
-                if(shth2>sep2(nsep-3)) then
-                    cdth(nsep-3) = cdth(nsep-3) + 1.0d0
-                    goto 78
-                endif
-                do ii=nsep-4,1,-1
-                   if(shth2>sep2(ii)) then
-                      cdth(ii) = cdth(ii) + 1.0d0
-                      goto 78
-                   endif
-                enddo
+            do while(j/=0)
+               shth2 = (xi-x1(j))**2 + (yi-y1(j))**2 + (zi-z1(j))**2
+               !th = 2.*sqrt(shth2)*180./3.1415
+               if(shth2<=sep2max) then
+                  ! Now count the pair by finding its (ii) bin in vector of ang-space bins
+                  if(shth2>sep2(nsep)) then
+                     cdth(nsep) = cdth(nsep) + 1.0d0
+                     goto 78
+                  endif
+                  if(shth2>sep2(nsep-1)) then
+                     cdth(nsep-1) = cdth(nsep-1) + 1.0d0
+                     goto 78
+                  endif
+                  if(shth2>sep2(nsep-2)) then
+                     cdth(nsep-2) = cdth(nsep-2) + 1.0d0
+                     goto 78
+                  endif
+                  if(shth2>sep2(nsep-3)) then
+                     cdth(nsep-3) = cdth(nsep-3) + 1.0d0
+                     goto 78
+                  endif
+                  do ii=nsep-4,1,-1
+                     if(shth2>sep2(ii)) then
+                        cdth(ii) = cdth(ii) + 1.0d0
+                        goto 78
+                     endif
+                  enddo
+               endif
+               78 j = ll1(j)
+            end do
+            
+         end do lp_jq2
+      end do lp_jq1
+   end do
+   !$omp end parallel do
+endif
+
+if (grid==0) then
+   do i=1,npt
+      do j = i + 1, npt1
+         if (i == j) cycle ! Skip the calculation if the indices are the same
+         shth2 = (x(i)-x1(j))**2 + (y(i)-y1(j))**2 + (z(i)-z1(j))**2
+         if(shth2<=sep2max) then
+            if(shth2>sep2(nsep)) then
+               cdth(nsep) = cdth(nsep) + 1.0d0
+               goto 79
             endif
-            78 j = ll1(j)
-         end do
-         
-      end do lp_jq2
-   end do lp_jq1
-end do
-!$omp end parallel do
+            if(shth2>sep2(nsep-1)) then
+               cdth(nsep-1) = cdth(nsep-1) + 1.0d0
+               goto 79
+            endif
+            if(shth2>sep2(nsep-2)) then
+               cdth(nsep-2) = cdth(nsep-2) + 1.0d0
+               goto 79
+            endif
+            if(shth2>sep2(nsep-3)) then
+               cdth(nsep-3) = cdth(nsep-3) + 1.0d0
+               goto 79
+            endif
+            do ii=nsep-4,1,-1
+               if(shth2>sep2(ii)) then
+                  cdth(ii) = cdth(ii) + 1.0d0
+                  goto 79
+               endif
+            enddo
+         endif
+         79 continue
+      end do
+   end do
+
+endif
+
+
+
 close(11)  ! close log
 write(*,*) ' '
 end subroutine th_C

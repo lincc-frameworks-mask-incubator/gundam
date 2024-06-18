@@ -345,8 +345,8 @@ python module cflibfor ! in
                 real(kind=8) intent(out),dimension(nbts,nsep),depend(nbts,nsep) :: baa
             end subroutine th_Ab_wg
 
-            subroutine th_C(nt,npt,ra,dec,x,y,z,npt1,x1,y1,z1,nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk1,ll1,cdth) ! in :cflibfor:cflibfor.f90:mod
-                integer :: nt,npt,npt1,mxh1,mxh2,nsep
+            subroutine th_C(nt,npt,ra,dec,x,y,z,npt1,x1,y1,z1,nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk1,ll1,grid,cdth) ! in :cflibfor:cflibfor.f90:mod
+                integer :: nt,npt,npt1,mxh1,mxh2,nsep,grid
                 real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z
                 real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1
                 real(kind=8) dimension(nsep + 1),depend(nsep) :: sep

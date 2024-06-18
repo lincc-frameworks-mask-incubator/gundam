@@ -2415,6 +2415,27 @@ def packpars(kind="pcf", **kwargs):
         p.cra1 = "ra"
         p.cdec1 = "dec"
         p.cwei1 = "wei"
+    if kind == "acf1":
+        p.mxh1 = 20
+        p.mxh2 = 20
+        p.doboot = False
+        p.nbts = 50
+        p.bseed = 12345
+        p.wfib = False
+        p.nsept = 36
+        p.septmin = 0.01
+        p.dsept = 0.1
+        p.logsept = 1
+        p.file = ""
+        p.file1 = ""
+        p.description = ""
+        p.estimator = "NAT"
+        p.cra = "ra"
+        p.cdec = "dec"
+        p.cwei = "wei"
+        p.cra1 = "ra"
+        p.cdec1 = "dec"
+        p.cwei1 = "wei"
     if kind == "accf":
         p.estimator = "DP"  # only DP estimator is implemented
         p.cra2 = "ra"
@@ -3474,6 +3495,36 @@ def pairs_auto(par, wunit, logff, tab, x, y, z, sk, ll, dc=None):
 
     return tt
 
+def pairs_auto1(par, wunit, logff, tab, x, y, z, tab1, x1, y1, z1, sk1, ll1, dc=None, dc1=None):
+    nt = par.nthreads
+    npt = len(tab)
+    npt1 = len(tab1)
+    sept = makebins(par.nsept, par.septmin, par.dsept, par.logsept)[0]    
+    args = [
+            nt,
+            npt,
+            tab[par.cra].data,
+            tab[par.cdec].data,
+            x,
+            y,
+            z,
+            npt1,
+            x1,
+            y1,
+            z1,
+            par.nsept,
+            sept,
+            par.sbound,
+            par.mxh1,
+            par.mxh2,
+            par.cntid,
+            logff,
+            sk1,
+            ll1,
+            par.grid
+        ]
+    tt = cff.mod.th_C(*args)  # fast unweighted counting
+    return tt
 
 # =============================================================================
 def pairs_cross(par, wunit, logff, tab, x, y, z, tab1, x1, y1, z1, sk1, ll1, dc=None, dc1=None):
@@ -3890,7 +3941,6 @@ def pairs_cross(par, wunit, logff, tab, x, y, z, tab1, x1, y1, z1, sk1, ll1, dc=
                 tt = cff.mod.th_C_wg(*args)  # weighted counting
 
     return tt
-
 
 # =============================================================================
 def rppi_A(tab, par, nthreads=-1, write=True, plot=False, **kwargs):
@@ -6121,6 +6171,219 @@ def acf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
 
     return counts
 
+# =============================================================================
+def acf1(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
+    """
+    Given two astropy tables corresponding to **data** and **random** samples,
+    this routine calculates the **two-point angular space auto-correlation
+    function (acf)**
+
+    All input parameters that control binning, cosmology, estimator, etc.
+    are passed in a single dictionary ``par``, which can be easily generated
+    with default values using :func:`gundam.packpars` and customized later
+
+    .. rubric :: Parameters
+
+    tab : astropy table
+        Table with data particles (D)
+
+    tab1 : astropy table
+        Table with random particles (R)
+
+    par : Munch dictionary
+        Input parameters. See :ref:`indic-acf` for a detailed description
+
+    nthreads : integer. Default=-1
+        Number of threads to use. Default to -1, which means all available cpu cores
+
+    write : bool. Default=True
+       * True : write several output files for DD/RR/DR counts, correlations, etc.
+       * False : do not write any output files (except for logs, which are always saved)
+
+    plot : bool. Default=False
+       * True : generate the CF plot on screen (and saved to disk when ``write=True``)
+       * False : do not generate any plots
+
+    kwargs : dict
+        Extra keywords passed to :func:`gundam.plotcf`
+
+
+    .. rubric :: Returns
+
+    counts : Munch dictionary
+        Munch dictionary, containing all counts and correlations accesible by
+        field keys, e.g. counts.dd, counts.rr, counts.xis, etc. It also stores
+        the complete log and all input parameters. See :ref:`outdicacf` for a
+        detailed description.
+
+
+    .. rubric :: Examples
+
+    .. code-block:: python
+
+        import gundam as gun ; from astropy.table import Table
+        gals  = Table.read('redgal.fits')                       # read data
+        rans  = Table.read('redgal_rand.fits')                  # read randoms
+        par = gun.packpars(kind='rcf',outfn='redgal')           # generate default parameters
+        cnt = gun.rcf(gals, rans, par, write=True, plot=True)   # get rcf and plot
+    """
+    lj = 27  # nr of characters for left justification of some status msgs
+
+    # Initialize logs, check if par has the right kind, etc. Common to all CF functions
+    (par, log, logf, logff, runspyder, t0) = initialize("acf1", par, nthreads=nthreads, write=write, plot=plot)
+
+    # Find number of particles in input tables --------------------------------
+    npt, npt1 = len(tab), len(tab1)
+
+    # Log calling information  ------------------------------------------------
+    logcallinfo(log, par, npts=[npt, npt1])
+
+    # Create bins in angular space  -------------------------------------------
+    sept, septout = makebins(par.nsept, par.septmin, par.dsept, par.logsept)
+
+    # Unpack column names in params just for shorter writing  -----------------
+    cra, cdec, cwei = par.cra, par.cdec, par.cwei
+    cra1, cdec1, cwei1 = par.cra1, par.cdec1, par.cwei1
+
+    # Write out the boundary of the survey  -----------------------------------
+    par.sbound = bound2d([tab[cdec].data, tab1[cdec1].data])
+    log.info("Sample boundaries : (" + ("{:0.5f}, " * 4).format(*par.sbound)[:-2] + ")")
+
+    # Guess if the sample cross the 360-0 deg division
+    cross0 = cross0guess(tab[cra].data)
+    log.info("Sample seems to cross RA=0 : " + str(cross0))
+    if cross0 is True:
+        log.info("Custom RA boundaries : " + str(par.custRAbound))
+
+    # Adequate pars to DD,RR and DR counts  -----------------------------------
+    par_dd = deepcopy(par)
+    par_dd.kind = "thC"
+    par_dd.cntid = "DD"
+    par_rr = deepcopy(par)
+    par_rr.kind = "thC"
+    par_rr.cntid = "RR"
+    par_rr.wfib = False  # don't do fiber corrections in random counts
+    par_rr.doboot = False  # don't do bootstraping in random counts
+    par_dr = deepcopy(par)
+    par_dr.kind = "thC"
+    par_dr.cntid = "DR"
+    par_dr.wfib = False  # don't do fiber corrections in crounts counts
+    par_dr.doboot = False  # don't do bootstraping in cross counts
+
+    # If requested, try to find the best SK grid for DD/RR counts  -----------
+    if par.autogrid:
+        log.info("SK Autogrid ON")
+        par_dd.mxh1, par_dd.mxh2, tdens_dd = bestSKgrid2d(par_dd, npt, tab[cra].data, dens=par.dens)
+        log.info("SK cell target density".ljust(lj) + f" : {tdens_dd:0.3f}")
+        par_rr.mxh1, par_rr.mxh2, tdens_rr = bestSKgrid2d(par_rr, npt1, tab1[cra1].data, dens=par.dens)
+        log.info("SK cell target density".ljust(lj) + f" : {tdens_rr:0.3f}")
+        # For crosscounts choose the grid of randoms. Change if passing Random-Data order instead
+        par_dr.mxh1, par_dr.mxh2, par_dr.mxh3 = par_rr.mxh1, par_rr.mxh2, par_rr.mxh3
+        # par_dr.mxh1, par_dr.mxh2, par_dr.mxh3 = par_dd.mxh1, par_dd.mxh2, par_dd.mxh3
+    else:
+        log.info("Autogrid OFF")
+    log.info("SK grid size [dec,ra]".ljust(lj) + " : " + str([par_dd.mxh1, par_dd.mxh2]))
+    log.info("SK grid1 size [dec,ra]".ljust(lj) + " : " + str([par_rr.mxh1, par_rr.mxh2]))
+
+    # Sort table/s according to some order  -----------------------------------
+    tstart = time.time()
+    sidx = pixsort(tab, [cra, cdec], par_dd)
+    tab = tab[sidx]
+    sidx1 = pixsort(tab1, [cra1, cdec1], par_rr)
+    tab1 = tab1[sidx1]
+    tend = time.time()
+    log.info("Pixsort time (s)".ljust(lj) + f" : {tend-tstart:0.3f}")
+
+    # Create SK and LL tables  -----------------------------------------------
+    tstart = time.time()
+    sk, ll = cff.mod.skll2d(par_dd.mxh1, par_dd.mxh2, npt, tab[cra], tab[cdec], par_dd.sbound)
+    sk1, ll1 = cff.mod.skll2d(par_rr.mxh1, par_rr.mxh2, npt1, tab1[cra1], tab1[cdec1], par_rr.sbound)
+    tend = time.time()
+    log.info("SK-LL tables build time (s)".ljust(lj) + f" : {tend-tstart:0.3f}")
+
+    # Convert ra,dec,z to spherical coords ------------
+    x, y, z = radec2xyz(tab[cra].data * np.pi / 180.0, tab[cdec].data * np.pi / 180.0)
+    x1, y1, z1 = radec2xyz(tab1[cra1].data * np.pi / 180.0, tab1[cdec1].data * np.pi / 180.0)
+
+    # Find out if all weights are 1.0 to later call slighly faster functions
+    wunit = (tab[cwei].data == 1).all()
+    wunit1 = (tab1[cwei1].data == 1).all()
+    wunit_dr = wunit and wunit1
+
+    # ==========================================================================
+    # ==========================   COUNT PAIRS   ===============================
+    log.info("====  Counting " + par_dd.cntid + " pairs in " + str(par_dd.mxh1) + " DEC strips  =====")
+    if runspyder:
+        log.info("      [for progress updates check " + logff + "]")
+    tstart = time.time()
+    tt1 = pairs_auto1(par_dd, wunit, logff, tab, x, y, z, tab, x, y, z, sk, ll)
+    tend = time.time()
+    logtimming(log, par_dd.cntid, tend - tstart)
+    tacc = tend - tstart
+
+    if par.estimator not in ("DP"):
+        log.info("====  Counting " + par_rr.cntid + " pairs in " + str(par_rr.mxh1) + " DEC strips  =====")
+        if runspyder:
+            log.info("      [for progress updates check " + logff + "]")
+        tstart = time.time()
+        tt2 = pairs_auto1(par_rr, wunit1, logff, tab1, x1, y1, z1, tab1, x1, y1, z1, sk1, ll1)
+        tend = time.time()
+        logtimming(log, par_rr.cntid, tend - tstart)
+        tacc = tacc + (tend - tstart)
+
+    if par.estimator in ("HAM", "DP", "LS"):
+        log.info("====  Counting " + par_dr.cntid + " pairs in " + str(par_dr.mxh1) + " DEC strips  =====")
+        if runspyder:
+            log.info("      [for progress updates check " + logff + "]")
+        tstart = time.time()
+        tt3 = pairs_cross(par_dr, wunit_dr, logff, tab, x, y, z, tab1, x1, y1, z1, sk1, ll1)
+        tend = time.time()
+        logtimming(log, par_dr.cntid, tend - tstart)
+        tacc = tacc + (tend - tstart)
+    # =========================  END PAIR COUNTS  ==============================
+    # ==========================================================================
+
+    # Tidy ouput counts  ------------------------------------------------------
+    dd, bdd = tidy_counts(tt1, par_dd)
+    rr, dum = tidy_counts(tt2, par_rr) if par.estimator not in ("DP") else (np.zeros(par.nsept), 0)
+    dr, dum = tidy_counts(tt3, par_dr) if par.estimator in ("HAM", "DP", "LS") else (np.zeros(par.nsept), 0)
+
+    # Compute angular correlation function estimate  --------------------------
+    (wth, wtherr) = tpcf(npt, npt1, dd, bdd, rr, dr, estimator=par.estimator)
+
+    # Do plot if desired  -----------------------------------------------------
+    if plot:
+        try:
+            # plt.figure(1)
+            plt.figure("ACF plot 1")
+            plotcf(septout[1], wth, wtherr, fac=1.0, write=write, par=par, **kwargs)
+        except ValueError:
+            print("Warning: there is a problem with the plot !!!")
+
+    # Build ouput  ------------------------------------------------------------
+    counts = buildoutput(par, npts=[npt, npt1], binslmr=septout, dd=dd, rr=rr, dr=dr, bootc=bdd, cf=wth, cferr=wtherr)
+
+    # Finalize  ---------------------------------------------------------------
+    finalize(log, logf, logff, tacc, t0, counts)
+
+    # Write ascii counts, correlations and parameters  ------------------------
+    if write:
+        writeasc_cf(*septout, wth, wtherr, par)
+        writeasc_counts(*septout, dd, par, cntid="dd")
+        if par.estimator not in ("DP"):
+            writeasc_counts(*septout, rr, par, cntid="rr")
+        if par.estimator in ("HAM", "DP", "LS"):
+            writeasc_counts(*septout, dr, par, cntid="dr")
+        savepars(par)
+        savecounts(counts)
+
+    # Close log  --------------------------------------------------------------
+    closelog(log, runspyder=runspyder)
+
+    return counts
+
+
+
 
 # =============================================================================
 def accf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
@@ -6486,6 +6749,12 @@ def buildoutput(
         counts.sm = binslmr[1]
         counts.sr = binslmr[2]
     elif par.kind in ["acf", "accf"]:
+        counts.wth = cf
+        counts.wtherr = cferr
+        counts.thl = binslmr[0]
+        counts.thm = binslmr[1]
+        counts.thr = binslmr[2]
+    elif par.kind in ["acf1"]:
         counts.wth = cf
         counts.wtherr = cferr
         counts.thl = binslmr[0]
