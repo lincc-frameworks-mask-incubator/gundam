@@ -293,6 +293,15 @@ python module cflibfor ! in
                 integer intent(out),dimension(npt),depend(npt) :: ll
             end subroutine skll2d
 
+            subroutine th_A_naiveway(npt,x,y,z,nsep,sep,aa) ! in :cflibfor:cflibfor.f90:mod
+                integer :: npt,nsep
+                real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z
+                real(kind=8) dimension(nsep + 1),depend(nsep) :: sep
+                real(kind=8) :: sbound(4)
+                character*2  :: cntid
+                real(kind=8) intent(out),dimension(nsep),depend(nsep) :: aa
+            end subroutine th_A
+
             subroutine th_A(nt,npt,dec,x,y,z,nsep,sep,sbound,mxh1,mxh2,cntid,logf,sk,ll,aa) ! in :cflibfor:cflibfor.f90:mod
                 integer :: npt,nt,nsep,mxh1,mxh2
                 real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z

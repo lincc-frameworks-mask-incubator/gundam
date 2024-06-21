@@ -2805,7 +2805,7 @@ def tidy_counts(tt, par):
         dd = tt
         if par.kind in ["pcf", "pccf", "rppiA", "rppiC"]:
             bdd = np.zeros([0, par.nsepv, par.nsepp])
-        if par.kind in ["acf", "accf", "thA", "thC"]:
+        if par.kind in ["acf", "acf1", "accf", "thA", "thC"]:
             bdd = np.zeros([0, par.nsept])
         if par.kind in ["rcf", "rccf", "sA", "sC"]:
             bdd = np.zeros([0, par.nseps])
@@ -2815,7 +2815,7 @@ def tidy_counts(tt, par):
     if par.kind in ["pcf", "pccf", "rppiA", "rppiC"]:
         dd = dd.transpose([1, 0])  # orig=[1,0]    invert=[0,1]
         bdd = bdd.transpose([1, 2, 0])  # orig=[2,1,0]  invert=[0,1,2]
-    if par.kind in ["acf", "accf", "rcf", "rccf", "thA", "sA", "thC", "sC"]:
+    if par.kind in ["acf", "acf1", "accf", "rcf", "rccf", "thA", "sA", "thC", "sC"]:
         bdd = bdd.transpose([1, 0])
     return (dd, bdd)
 
@@ -5959,6 +5959,71 @@ def th_C(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
 
 
 # =============================================================================
+# Only for tests
+def acf_naiveway(ra, dec, ra1, dec1, par):
+
+    # Find number of particles in input tables --------------------------------
+    npt, npt1 = len(ra), len(ra1)
+
+    # Create bins in angular space  -------------------------------------------
+    sep = np.empty(par.nsept + 1, dtype=np.float64)
+    for i in range(0, par.nsept + 1):
+        sep[i] = par.septmin * 10 ** (i * par.dsept)
+
+    # Adequate pars to DD,RR and DR counts  -----------------------------------
+    par_dd = deepcopy(par)
+    par_dd.kind = "thA"
+    par_dd.cntid = "DD"
+    par_rr = deepcopy(par)
+    par_rr.kind = "thA"
+    par_rr.cntid = "RR"
+    par_rr.wfib = False  # don't do fiber corrections in random counts
+    par_rr.doboot = False  # don't do bootstraping in random counts
+    par_dr = deepcopy(par)
+    par_dr.kind = "thC"
+    par_dr.cntid = "DR"
+    par_dr.wfib = False  # don't do fiber corrections in crounts counts
+    par_dr.doboot = False  # don't do bootstraping in cross counts
+
+    # Convert ra,dec,z to spherical coords ------------
+    x, y, z = radec2xyz(ra * np.pi / 180.0, dec * np.pi / 180.0)
+    x1, y1, z1 = radec2xyz(ra1 * np.pi / 180.0, dec1 * np.pi / 180.0)
+
+    # ==========================================================================
+    # ==========================   COUNT PAIRS   ===============================
+    if par.estimator not in ("DP"):
+        args = [
+            npt,
+            x,
+            y,
+            z,
+            par.nsept,
+            sep,
+        ]
+        dd = cff.mod.th_A_naiveway(*args)
+        args = [
+            npt1,
+            x1,
+            y1,
+            z1,
+            par.nsept,
+            sep,
+        ]
+        rr = cff.mod.th_A_naiveway(*args)
+    # =========================  END PAIR COUNTS  ==============================
+    # ==========================================================================
+
+    wth = np.zeros(par.nsept)  # the correlation function (initizalize to -1 ?)
+    if par.estimator == "NAT":
+        nf = (npt1 / npt) * ((npt1 - 1.0) / (npt - 1.0))  # normalizing factor
+        for i in range(par.nsept):
+            if rr[i] > 0.0:
+                wth[i] = nf * dd[i] / rr[i] - 1.0
+
+    return dd, rr, wth
+
+
+# =============================================================================
 def acf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     """
     Given two astropy tables corresponding to **data** and **random** samples,
@@ -6252,8 +6317,10 @@ def acf1(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     # Guess if the sample cross the 360-0 deg division
     cross0 = cross0guess(tab[cra].data)
     log.info("Sample seems to cross RA=0 : " + str(cross0))
+    print("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
     if cross0 is True:
         log.info("Custom RA boundaries : " + str(par.custRAbound))
+        print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
     # Adequate pars to DD,RR and DR counts  -----------------------------------
     par_dd = deepcopy(par)

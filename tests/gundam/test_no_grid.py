@@ -1,6 +1,7 @@
 import gundam as gun
 import numpy as np
 from astropy.table import Table
+from munch import Munch
 
 
 def test_example_acf1():
@@ -38,7 +39,7 @@ def test_example_acf1():
     dd_acf = np.load("tests/data/dd_acf.npy")
     w_acf_nat = np.load("tests/data/w_acf_nat.npy")
 
-    assert len(c_bin_acf) == par.nsept, f"Expected {num_bins + 1} bin edges, but got {len(bin_edges)}"
+    assert len(c_bin_acf) == par.nsept, f"Expected {len(c_bin_acf)} bin edges, but got {par.nsept}"
     np.testing.assert_almost_equal(
         c_bin_acf, cnt.thm, decimal=5, err_msg="Bin centers do not match expected values"
     )
@@ -48,18 +49,51 @@ def test_example_acf1():
     np.testing.assert_almost_equal(
         l_binedges_acf, cnt.thl, decimal=5, err_msg="Bin left borders do not match expected values"
     )
-    assert isinstance(cnt.wth, np.ndarray), f"Expected hist to be a numpy array, but got {type(hist)}"
-    assert isinstance(cnt.rr, np.ndarray), f"Expected hist to be a numpy array, but got {type(hist)}"
-    assert isinstance(cnt.dd, np.ndarray), f"Expected hist to be a numpy array, but got {type(hist)}"
+    assert isinstance(cnt.wth, np.ndarray), f"Expected hist to be a numpy array, but got {type(np.ndarray)}"
+    assert isinstance(cnt.rr, np.ndarray), f"Expected hist to be a numpy array, but got {type(np.ndarray)}"
+    assert isinstance(cnt.dd, np.ndarray), f"Expected hist to be a numpy array, but got {type(np.ndarray)}"
     #assert np.issubdtype(cnt.wth.dtype, np.float), "cnt.wth dtype is not float"
     #assert np.issubdtype(cnt.rr.dtype, np.float), "cnt.rr dtype is not float"
     #assert np.issubdtype(cnt.dd.dtype, np.float), "cnt.dd dtype is not float"
-    np.testing.assert_almost_equal(
-        w_acf_nat, cnt.wth, decimal=1, err_msg="Correlation function is not correct"
+    np.testing.assert_allclose(
+        w_acf_nat, cnt.wth, atol=1e-1, err_msg="Correlation function is not correct"
     )
-    np.testing.assert_almost_equal(
-        rr_acf, cnt.rr, decimal=1, err_msg="Random-Random histogram is not correct"
+    np.testing.assert_allclose(
+        rr_acf, cnt.rr, atol=2e-3, err_msg="Random-Random histogram is not correct"
     )
-    np.testing.assert_almost_equal(
-        dd_acf, cnt.dd, decimal=0, err_msg="Object-Object histogram is not correct"
+    np.testing.assert_allclose(
+        dd_acf, cnt.dd, atol=2e-3, err_msg="Object-Object histogram is not correct"
+    )
+
+def test_example_acf_naiveway():
+    # DEFINE PARAMETERS  ==========================================================
+    par = Munch()
+    par.dsept = 0.10
+    par.nsept = 33
+    par.septmin = 0.01
+    par.estimator = "NAT"  # Choose Landy-Szalay estimator for the PCF
+
+    # READ DATA FILES  ============================================================
+    gals = Table.read("tests/data/DATA.fits")
+    gals = gals[["ra", "dec"]]
+
+    rans = Table.read("tests/data/RAND.fits")
+    rans = rans[["ra", "dec"]]
+    # ==============================================================================
+    # CALCULATE THE CORRELATION
+    dd, rr, wth = gun.acf_naiveway(gals['ra'].data, gals['dec'].data, rans['ra'].data, rans['dec'].data, par)
+
+    rr_acf = np.load("tests/data/rr_acf.npy")
+    dd_acf = np.load("tests/data/dd_acf.npy")
+    w_acf_nat = np.load("tests/data/w_acf_nat.npy")
+
+
+    np.testing.assert_allclose(
+        w_acf_nat, wth, atol=1e-1, err_msg="Correlation function is not correct"
+    )
+    np.testing.assert_allclose(
+        rr_acf, rr, atol=2e-3, err_msg="Random-Random histogram is not correct"
+    )
+    np.testing.assert_allclose(
+        dd_acf, dd, atol=2e-3, err_msg="Object-Object histogram is not correct"
     )

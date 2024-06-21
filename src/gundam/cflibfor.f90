@@ -3805,6 +3805,79 @@ write(*,*) ' '
 end subroutine th_A
 
 
+subroutine th_A_naiveway(npt,x,y,z,nsep,sep,aa)
+!===============================================================================
+! NAME
+!  th_A()
+!
+! DESCRIPTION
+!  Count data pairs in angular space for ONE sample of particles
+!
+! INPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  npt        int              Number of particles
+!  dec        r8(npt)          DEC of particles [deg]
+!  x,y,z      r8(npt)          X,Y,Z coordinates of particles (see radec2xyz())
+!  nsep       int              Number of angular separation bins
+!  sep        r8(nsep+1)       Bins in angular separation [deg]
+! OUTPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  aa        r8(nsep)          Counts in angular separation bins
+!
+! NOTES  -----------------------------------------------------------------------
+!  1. RA limits should be set to ramin=0 and ramax=360.
+!  2. Remember to update the declarations in cflibfor.pyf if you add/remove 
+!     in/out parameters to this exposed subroutine.
+
+implicit none
+real(kind=8) :: dec(npt)
+real(kind=8) :: x(npt),y(npt),z(npt),sep(nsep+1)
+real(kind=8) :: aa(nsep)
+real(kind=8) :: shth2, dltdec
+real(kind=8) :: sep2(nsep+1),sep2max
+integer      :: npt,nsep
+integer      :: i,j,ii
+
+!------------------
+! reset the counts, set max. ang. distance and square bins
+aa      = 0.d0
+dltdec  = sep(nsep+1)
+sep2    = (sin(0.5*sep*deg2rad))**2
+sep2max = sep2(nsep+1)
+ 
+!----------------------------------------------------
+do i=1,npt
+   do j = i + 1, npt
+      shth2 = (x(i)-x(j))**2 + (y(i)-y(j))**2 + (z(i)-z(j))**2
+      if(shth2<=sep2max) then
+         if(shth2>sep2(nsep)) then
+            aa(nsep) = aa(nsep) + 1.0d0
+            goto 79
+         endif
+         if(shth2>sep2(nsep-1)) then
+            aa(nsep-1) = aa(nsep-1) + 1.0d0
+            goto 79
+         endif
+         if(shth2>sep2(nsep-2)) then
+            aa(nsep-2) = aa(nsep-2) + 1.0d0
+            goto 79
+         endif
+         if(shth2>sep2(nsep-3)) then
+            aa(nsep-3) = aa(nsep-3) + 1.0d0
+            goto 79
+         endif
+         do ii=nsep-4,1,-1
+            if(shth2>sep2(ii)) then
+               aa(ii) = aa(ii) + 1.0d0
+               goto 79
+            endif
+         enddo
+      endif
+      79 continue
+   end do
+end do
+end subroutine th_A_naiveway
+
 subroutine th_A_wg(nt,npt,dec,wei,x,y,z,nsep,sep,sbound,mxh1,mxh2,wfib,cntid,logf,sk,ll,aa)
 !===============================================================================
 ! NAME
@@ -4394,7 +4467,7 @@ implicit none
 real(kind=8) :: ra(npt),dec(npt),ral,rau,decl,decu,hc1,hc2,shth2,stm2,dltra,dltdec
 real(kind=8) :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1) 
 real(kind=8) :: sep(nsep+1),sep2(nsep+1),sbound(4),sep2max,xi,yi,zi
-real(kind=8) :: cdth(nsep)
+real(kind=8) :: cdth(nsep), total_counts(1), too_large_counts(1)
 integer      :: nt,nthr,sk1(mxh2,mxh1),ll1(npt1),mxh1,mxh2,npt,npt1,nsep,ndp,grid
 integer      :: fracp,dpart,nadv,nc1,nc2,i,ii,j,iq1,iq2,p1,p2,jq1,jq2,jq1m
 integer      :: jq2m,jq2max,jq2min,jq2t
@@ -4439,6 +4512,7 @@ jq1m  = int(dltdec/hc1)+1
 ! Count pairs in SK grid
 write(*,*) ' '
 write(*,fmt='(a,i3,a)') '====  Counting '//cntid//' pairs in ', mxh1, ' DEC strips'
+
 if (grid==1) then
    !$omp parallel do reduction(+:cdth) default(shared) &
    !$omp& private(iq1,iq2,jq1,jq2) &
@@ -4523,9 +4597,12 @@ if (grid==1) then
    !$omp end parallel do
 endif
 
+total_counts = 0.0d0
+too_large_counts = 0.0d0
 if (grid==0) then
    do i=1,npt
       do j = i + 1, npt1
+         total_counts = total_counts + 1.0d0
          if (i == j) cycle ! Skip the calculation if the indices are the same
          shth2 = (x(i)-x1(j))**2 + (y(i)-y1(j))**2 + (z(i)-z1(j))**2
          if(shth2<=sep2max) then
@@ -4552,13 +4629,17 @@ if (grid==0) then
                endif
             enddo
          endif
+         if(shth2>sep2max) then
+            too_large_counts = too_large_counts + 1.0d0
+         endif
          79 continue
       end do
    end do
 
 endif
 
-
+print *, 'total_counts:', total_counts
+print *, 'too_large_counts:', too_large_counts
 
 close(11)  ! close log
 write(*,*) ' '
