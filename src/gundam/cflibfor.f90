@@ -4601,9 +4601,8 @@ total_counts = 0.0d0
 too_large_counts = 0.0d0
 if (grid==0) then
    do i=1,npt
-      do j = i + 1, npt1
+      do j = 1, npt1
          total_counts = total_counts + 1.0d0
-         if (i == j) cycle ! Skip the calculation if the indices are the same
          shth2 = (x(i)-x1(j))**2 + (y(i)-y1(j))**2 + (z(i)-z1(j))**2
          if(shth2<=sep2max) then
             if(shth2>sep2(nsep)) then
