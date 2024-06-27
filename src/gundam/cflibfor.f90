@@ -137,7 +137,7 @@ subroutine bootstrap(npt,nboot,fixseed,w)
   !
   ! OUTPUTS
   !  Variable----Type----------------Description--------------------------
-  !  w           real*4(npt,nboot)   Bootstrap resampling weights
+  !  w           real*4(nboot,npt)   Bootstrap resampling weights
 
 implicit none
 integer      :: npt,nboot,fixseed,n,i,nb,idx

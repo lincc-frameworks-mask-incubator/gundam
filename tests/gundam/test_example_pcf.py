@@ -44,4 +44,5 @@ def test_example_pcf():
     # CALCULATE THE CORRELATION
     nt = 4  # Threads to use
     cnt = gun.pcf(gals, rans, par, nthreads=nt, plot=True, write=True)
+    print(cnt)
     # ==============================================================================
