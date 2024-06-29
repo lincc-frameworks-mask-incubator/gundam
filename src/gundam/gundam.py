@@ -3495,36 +3495,38 @@ def pairs_auto(par, wunit, logff, tab, x, y, z, sk, ll, dc=None):
 
     return tt
 
+
 def pairs_auto1(par, wunit, logff, tab, x, y, z, tab1, x1, y1, z1, sk1, ll1, dc=None, dc1=None):
     nt = par.nthreads
     npt = len(tab)
     npt1 = len(tab1)
-    sept = makebins(par.nsept, par.septmin, par.dsept, par.logsept)[0]    
+    sept = makebins(par.nsept, par.septmin, par.dsept, par.logsept)[0]
     args = [
-            nt,
-            npt,
-            tab[par.cra].data,
-            tab[par.cdec].data,
-            x,
-            y,
-            z,
-            npt1,
-            x1,
-            y1,
-            z1,
-            par.nsept,
-            sept,
-            par.sbound,
-            par.mxh1,
-            par.mxh2,
-            par.cntid,
-            logff,
-            sk1,
-            ll1,
-            par.grid
-        ]
+        nt,
+        npt,
+        tab[par.cra].data,
+        tab[par.cdec].data,
+        x,
+        y,
+        z,
+        npt1,
+        x1,
+        y1,
+        z1,
+        par.nsept,
+        sept,
+        par.sbound,
+        par.mxh1,
+        par.mxh2,
+        par.cntid,
+        logff,
+        sk1,
+        ll1,
+        par.grid,
+    ]
     tt = cff.mod.th_C(*args)  # fast unweighted counting
     return tt
+
 
 # =============================================================================
 def pairs_cross(par, wunit, logff, tab, x, y, z, tab1, x1, y1, z1, sk1, ll1, dc=None, dc1=None):
@@ -3941,6 +3943,7 @@ def pairs_cross(par, wunit, logff, tab, x, y, z, tab1, x1, y1, z1, sk1, ll1, dc=
                 tt = cff.mod.th_C_wg(*args)  # weighted counting
 
     return tt
+
 
 # =============================================================================
 def rppi_A(tab, par, nthreads=-1, write=True, plot=False, **kwargs):
@@ -5961,7 +5964,6 @@ def th_C(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
 # =============================================================================
 # Only for tests
 def acf_naiveway(ra, dec, ra1, dec1, par):
-
     # Find number of particles in input tables --------------------------------
     npt, npt1 = len(ra), len(ra1)
 
@@ -6236,6 +6238,7 @@ def acf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
 
     return counts
 
+
 # =============================================================================
 def acf1(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     """
@@ -6295,7 +6298,9 @@ def acf1(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     lj = 27  # nr of characters for left justification of some status msgs
 
     # Initialize logs, check if par has the right kind, etc. Common to all CF functions
-    (par, log, logf, logff, runspyder, t0) = initialize("acf1", par, nthreads=nthreads, write=write, plot=plot)
+    (par, log, logf, logff, runspyder, t0) = initialize(
+        "acf1", par, nthreads=nthreads, write=write, plot=plot
+    )
 
     # Find number of particles in input tables --------------------------------
     npt, npt1 = len(tab), len(tab1)
@@ -6428,7 +6433,9 @@ def acf1(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
             print("Warning: there is a problem with the plot !!!")
 
     # Build ouput  ------------------------------------------------------------
-    counts = buildoutput(par, npts=[npt, npt1], binslmr=septout, dd=dd, rr=rr, dr=dr, bootc=bdd, cf=wth, cferr=wtherr)
+    counts = buildoutput(
+        par, npts=[npt, npt1], binslmr=septout, dd=dd, rr=rr, dr=dr, bootc=bdd, cf=wth, cferr=wtherr
+    )
 
     # Finalize  ---------------------------------------------------------------
     finalize(log, logf, logff, tacc, t0, counts)
@@ -6448,8 +6455,6 @@ def acf1(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     closelog(log, runspyder=runspyder)
 
     return counts
-
-
 
 
 # =============================================================================

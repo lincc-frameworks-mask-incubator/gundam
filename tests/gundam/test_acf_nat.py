@@ -30,7 +30,6 @@ def test_example_acf():
     cnt = gun.acf(gals, rans, par, nthreads=nt, plot=False, write=False)
     # ==============================================================================
 
-
     r_binedges_acf = np.load("tests/data/r_binedges_acf.npy")
     c_bin_acf = np.load("tests/data/c_binedges_acf.npy")
     l_binedges_acf = np.load("tests/data/l_binedges_acf.npy")
@@ -51,15 +50,9 @@ def test_example_acf():
     assert isinstance(cnt.wth, np.ndarray), f"Expected hist to be a numpy array, but got {type(np.ndarray)}"
     assert isinstance(cnt.rr, np.ndarray), f"Expected hist to be a numpy array, but got {type(np.ndarray)}"
     assert isinstance(cnt.dd, np.ndarray), f"Expected hist to be a numpy array, but got {type(np.ndarray)}"
-    #assert np.issubdtype(cnt.wth.dtype, np.float), "cnt.wth dtype is not float"
-    #assert np.issubdtype(cnt.rr.dtype, np.float), "cnt.rr dtype is not float"
-    #assert np.issubdtype(cnt.dd.dtype, np.float), "cnt.dd dtype is not float"
-    np.testing.assert_allclose(
-        w_acf_nat, cnt.wth, atol=1e-1, err_msg="Correlation function is not correct"
-    )
-    np.testing.assert_allclose(
-        rr_acf, cnt.rr, atol=2e-3, err_msg="Random-Random histogram is not correct"
-    )
-    np.testing.assert_allclose(
-        dd_acf, cnt.dd, atol=2e-3, err_msg="Object-Object histogram is not correct"
-    )
+    # assert np.issubdtype(cnt.wth.dtype, np.float), "cnt.wth dtype is not float"
+    # assert np.issubdtype(cnt.rr.dtype, np.float), "cnt.rr dtype is not float"
+    # assert np.issubdtype(cnt.dd.dtype, np.float), "cnt.dd dtype is not float"
+    np.testing.assert_allclose(w_acf_nat, cnt.wth, atol=1e-1, err_msg="Correlation function is not correct")
+    np.testing.assert_allclose(rr_acf, cnt.rr, atol=2e-3, err_msg="Random-Random histogram is not correct")
+    np.testing.assert_allclose(dd_acf, cnt.dd, atol=2e-3, err_msg="Object-Object histogram is not correct")
