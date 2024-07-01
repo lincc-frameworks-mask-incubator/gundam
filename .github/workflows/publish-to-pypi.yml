@@ -60,7 +60,7 @@ jobs:
         echo "CIBW_ARCHS=${CIBW_ARCHS}" >> $GITHUB_ENV
 
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.18.1
+      uses: pypa/cibuildwheel@v2.19.1
     - uses: actions/upload-artifact@v4
       with:
         name: artifact_${{ matrix.cibw_build }}
