@@ -4052,6 +4052,78 @@ close(11)  ! close log
 write(*,*) ' '
 end subroutine th_A_wg
 
+subroutine th_A_wg_naiveway(npt,wei,x,y,z,nsep,sep,aa)
+!===============================================================================
+! NAME
+!  th_A_wg_naiveway()
+!
+! DESCRIPTION
+!  Count weighted data pairs in angular space for ONE sample of particles
+!
+! INPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  npt        int              Number of particles
+!  wei        r4(npt)          WEIGHT of particles
+!  x,y,z      r8(npt)          X,Y,Z coordinates of particles (see radec2xyz())
+!  nsep       int              Number of angular separation bins
+!  sep        r8(nsep+1)       Bins in angular separation [deg]
+!
+! OUTPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  aa        r8(nsep)          Counts in angular separation bins
+!
+! NOTES  -----------------------------------------------------------------------
+!  1. RA limits should be set to ramin=0 and ramax=360.
+!  2. Remember to update the declarations in cflibfor.pyf if you add/remove
+!     in/out parameters to this exposed subroutine.
+
+implicit none
+real(kind=8) :: x(npt),y(npt),z(npt)
+real(kind=8) :: shth2,sep(nsep+1),sep2(nsep+1),sep2max
+real(kind=4) :: wei(npt),wpp
+real(kind=8) :: aa(nsep)
+integer      :: npt,nsep
+integer      :: i,j,ii
+
+!------------------
+! reset the counts, set max. ang. distance and square bins
+aa      = 0.d0
+sep2    = (sin(0.5*sep*deg2rad))**2
+sep2max = sep2(nsep+1)
+
+do i=1,npt
+   do j=i+1, npt
+      shth2 = (x(i)-x(j))**2 + (y(i)-y(j))**2 + (z(i)-z(j))**2
+      if(shth2<=sep2max) then
+          wpp = wei(i)*wei(j)          !weight by input
+          ! Now count the pair by finding its (ii) bin in vector of ang-space bins
+          if(shth2>sep2(nsep)) then
+              aa(nsep) = aa(nsep) + wpp
+              goto 78
+          endif
+          if(shth2>sep2(nsep-1)) then
+              aa(nsep-1) = aa(nsep-1) + wpp
+              goto 78
+          endif
+          if(shth2>sep2(nsep-2)) then
+              aa(nsep-2) = aa(nsep-2) + wpp
+              goto 78
+          endif
+          if(shth2>sep2(nsep-3)) then
+              aa(nsep-3) = aa(nsep-3) + wpp
+              goto 78
+          endif
+          do ii=nsep-4,1,-1
+             if(shth2>sep2(ii)) then
+                aa(ii) = aa(ii) + wpp
+                goto 78
+             endif
+          enddo
+      endif
+      78 continue
+   end do
+end do
+end subroutine th_A_wg_naiveway
 
 subroutine th_Ab(nt,npt,dec,x,y,z,nsep,sep,sbound,mxh1,mxh2,nbts,bseed,cntid,logf, &
            sk,ll,aa,baa)
@@ -4645,6 +4717,78 @@ write(*,*) ' '
 end subroutine th_C
 
 
+subroutine th_C_naiveway(npt,x,y,z,npt1,x1,y1,z1,nsep,sep,cdth)
+!===============================================================================
+! NAME
+!  th_C_naiveway()
+!
+! DESCRIPTION
+!  Cross-count data pairs in angular space for TWO samples of particles
+!
+! INPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  npt        int              Number of particles
+!  x,y,z      r8(npt)          [sampleC] X,Y,Z coordinates of particles (see radec2xyz())
+!  npt1       int              [sampleD] Number of particles
+!  x1,y1,z1   r8(npt1)         [sampleD] X,Y,Z coordinates of particles (see radec2xyz())
+!  nsep       int              Number of angular separation bins
+!  sep        r8(nsep+1)       Bins in angular separation [deg]
+!
+! OUTPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  cdth       r8(nsep)         Counts in angular separation bins
+!
+! NOTES  -----------------------------------------------------------------------
+!  1. RA limits should be set to ramin=0 and ramax=360.
+!  2. Remember to update the declarations in cflibfor.pyf if you add/remove
+!     in/out parameters to this exposed subroutine.
+
+implicit none
+real(kind=8) :: shth2
+real(kind=8) :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1)
+real(kind=8) :: sep(nsep+1),sep2(nsep+1),sep2max
+real(kind=8) :: cdth(nsep)
+integer      :: npt,npt1,nsep
+integer      :: i,ii,j
+
+!----------------------------------------------------
+! reset the counts, set max. ang. distance and square bins
+cdth    = 0.0d0
+sep2    = (sin(0.5*sep*deg2rad))**2
+sep2max = sep2(nsep+1)
+
+do i=1,npt
+  do j=1, npt1
+     shth2 = (x(i)-x1(j))**2 + (y(i)-y1(j))**2 + (z(i)-z1(j))**2
+     if(shth2<=sep2max) then
+        if(shth2>sep2(nsep)) then
+           cdth(nsep) = cdth(nsep) + 1.0d0
+           goto 79
+        endif
+        if(shth2>sep2(nsep-1)) then
+           cdth(nsep-1) = cdth(nsep-1) + 1.0d0
+           goto 79
+        endif
+        if(shth2>sep2(nsep-2)) then
+           cdth(nsep-2) = cdth(nsep-2) + 1.0d0
+           goto 79
+        endif
+        if(shth2>sep2(nsep-3)) then
+           cdth(nsep-3) = cdth(nsep-3) + 1.0d0
+           goto 79
+        endif
+        do ii=nsep-4,1,-1
+           if(shth2>sep2(ii)) then
+              cdth(ii) = cdth(ii) + 1.0d0
+              goto 79
+           endif
+        enddo
+     endif
+     79 continue
+  end do
+end do
+end subroutine th_C_naiveway
+
 subroutine th_C_wg(nt,npt,ra,dec,wei,x,y,z,npt1,wei1,x1,y1,z1, &
                    nsep,sep,sbound,mxh1,mxh2,wfib,cntid,logf,sk1,ll1,cdth)
 !===============================================================================
@@ -4827,6 +4971,82 @@ close(11)  ! close log
 write(*,*) ' '
 end subroutine th_C_wg
 
+subroutine th_C_wg_naiveway(npt,wei,x,y,z,npt1,wei1,x1,y1,z1,nsep,sep,cdth)
+!===============================================================================
+! NAME
+!  th_C_wg_naiveway()
+!
+! DESCRIPTION
+!  Cross-count weighted data pairs in angular space for TWO samples of particles
+!
+! INPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  npt        int              Number of particles
+!  wei        r4(npt)          [sampleC] WEIGHT of particles
+!  x,y,z      r8(npt)          [sampleC] X,Y,Z coordinates of particles (see radec2xyz())
+!  npt1       int              [sampleD] Number of particles
+!  wei1       r4(npt1)         [sampleD] WEIGHT of particles
+!  x1,y1,z1   r8(npt1)         [sampleD] X,Y,Z coordinates of particles (see radec2xyz())
+!  nsep       int              Number of angular separation bins
+!  sep        r8(nsep+1)       Bins in angular separation [deg]
+!
+! OUTPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  cdth       r8(nsep)         Counts in angular separation bins
+!
+! NOTES  -----------------------------------------------------------------------
+!  1. RA limits should be set to ramin=0 and ramax=360.
+!  2. Remember to update the declarations in cflibfor.pyf if you add/remove
+!     in/out parameters to this exposed subroutine.
+
+implicit none
+real(kind=8) :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1)
+real(kind=8) :: shth2, sep(nsep+1),sep2(nsep+1),sep2max
+real(kind=4) :: wei(npt),wei1(npt1),wpp
+real(kind=8) :: cdth(nsep)
+integer      :: npt,npt1,nsep
+integer      :: i,ii,j
+
+!----------------------------------------------------
+! reset the counts, set max. ang. distance and square bins
+cdth    = 0.0d0
+sep2    = (sin(0.5*sep*deg2rad))**2
+sep2max = sep2(nsep+1)
+
+do i=1,npt
+  do j=1, npt1
+    shth2 = (x(i)-x1(j))**2 + (y(i)-y1(j))**2 + (z(i)-z1(j))**2
+    !th = 2.*sqrt(shth2)*180./3.1415
+    if(shth2<=sep2max) then
+        wpp = wei(i)*wei1(j)                    !weight by input
+        ! Now count the pair by finding its (ii) bin in vector of ang-space bins
+        if(shth2>sep2(nsep)) then
+            cdth(nsep) = cdth(nsep) + wpp
+            goto 78
+        endif
+        if(shth2>sep2(nsep-1)) then
+            cdth(nsep-1) = cdth(nsep-1) + wpp
+            goto 78
+        endif
+        if(shth2>sep2(nsep-2)) then
+            cdth(nsep-2) = cdth(nsep-2) + wpp
+            goto 78
+        endif
+        if(shth2>sep2(nsep-3)) then
+            cdth(nsep-3) = cdth(nsep-3) + wpp
+            goto 78
+        endif
+        do ii=nsep-4,1,-1
+           if(shth2>sep2(ii)) then
+              cdth(ii) = cdth(ii) + wpp
+              goto 78
+           endif
+        end do
+    endif
+    78 continue
+  enddo
+end do
+end subroutine th_C_wg_naiveway
 
 subroutine th_Cb(nt,npt,ra,dec,x,y,z,npt1,x1,y1,z1, &
                  nsep,sep,sbound,mxh1,mxh2,nbts,bseed,cntid,logf,sk1,ll1,cdth,bcdth)
