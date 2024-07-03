@@ -526,6 +526,72 @@ write(*,*) ' '
 end subroutine rppi_A
 
 
+subroutine rppi_A_naiveway(npt,dc,x,y,z,nsepp,sepp,nsepv,sepv,aapv)
+!===============================================================================
+! NAME
+!  rppi_A_naiveway()
+!
+! DESCRIPTION
+!  Count data pairs in projected space for ONE sample of particles
+!
+! INPUTS
+!  Variable---Type-----------Description----------------------------------------
+!  npt        int            Number of particles
+!  dc         r8(npt)        DCOM of particles [Mpc/h]
+!  x,y,z      r8(npt)        X,Y,Z coordinates of particles (see radec2xyz())
+!  nsepp      int            Number of projected separation bins
+!  sepp       r8(nsepp+1)    Bins in projected separation [Mpc/h]
+!  nsepv      int            Number of radial separation bins
+!  sepv       r8(nsepv+1)    Bins in radial separation [Mpc/h]
+!
+! OUTPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  aapv       r8(nsepv,nsepp)  Counts in radial and projected separation bins
+!
+! NOTES  -----------------------------------------------------------------------
+!  1. RA limits should be set to ramin=0 and ramax=360.
+!  2. Remember to update the declarations in cflibfor.pyf if you add/remove
+!     in/out parameters to this exposed subroutine.
+
+implicit none
+real(kind=8)  :: x(npt),y(npt),z(npt),dc(npt),rp2
+real(kind=8)  :: sepp(nsepp+1),sepv(nsepv+1),sepp2(nsepp+1),rpmax2,rvmax,rv,idsepv
+real(kind=8)  :: aapv(nsepv,nsepp)
+integer       :: npt,nsepp,nsepv
+integer       :: i,ii,j,jj
+
+!----------------------------------------------------
+! Reset the counts, set rvmax and square rp bins
+aapv   = 0.0d0
+rvmax  = sepv(nsepv+1)
+sepp2  = sepp*sepp
+rpmax2 = sepp2(nsepp+1)
+idsepv = 1./(sepv(2)-sepv(1))  !inverse radial bin size
+
+do i=1,npt
+   do j=i+1,npt
+    rv = abs(dc(i)-dc(j))
+    if(rv<=rvmax) then
+       rp2 = 4.*dc(i)*dc(j)*((x(i)-x(j))**2 + (y(i)-y(j))**2 + (z(i)-z(j))**2)
+       if(rp2<=rpmax2) then
+           jj = 1 + int(rv*idsepv)       !find rv bin number
+           if(rp2>sepp2(nsepp)) then
+              aapv(jj,nsepp) = aapv(jj,nsepp) + 1.0d0
+              goto 70
+           endif
+           do ii=nsepp-1,1,-1
+              if(rp2>sepp2(ii)) then
+                 aapv(jj,ii) = aapv(jj,ii) + 1.0d0
+                 goto 70
+              endif
+           enddo
+       endif
+    endif
+    70 continue
+   enddo
+enddo
+end subroutine rppi_A_naiveway
+
 subroutine rppi_A_wg(nt,npt,dec,dc,wei,x,y,z,nsepp,sepp,nsepv,sepv,sbound, &
            mxh1,mxh2,mxh3,wfib,cntid,logf,sk,ll,aapv)
 !===============================================================================
@@ -720,6 +786,75 @@ close(11)  ! close log
 write(*,*) ' '
 end subroutine rppi_A_wg
 
+subroutine rppi_A_wg_naiveway(npt,dc,wei,x,y,z,nsepp,sepp,nsepv,sepv,aapv)
+!===============================================================================
+! NAME
+!  rppi_A_wg_naiveway()
+!
+! DESCRIPTION
+!  Count weighted data pairs in projected space for ONE sample of particles and
+!  optionally applies fiber-collision corrections
+!
+! INPUTS
+!  Variable---Type-----------Description----------------------------------------
+!  npt        int            Number of particles
+!  dc         r8(npt)        DCOM of particles [Mpc/h]
+!  wei        r4(npt)        WEIGHT of particles
+!  x,y,z      r8(npt)        X,Y,Z coordinates of particles (see radec2xyz())
+!  nsepp      int            Number of projected separation bins
+!  sepp       r8(nsepp+1)    Bins in projected separation [Mpc/h]
+!  nsepv      int            Number of radial separation bins
+!  sepv       r8(nsepv+1)    Bins in radial separation [Mpc/h]
+!
+! OUTPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  aapv       r8(nsepv,nsepp)  Counts in radial and projected separation bins
+!
+! NOTES  -----------------------------------------------------------------------
+!  1. RA limits should be set to ramin=0 and ramax=360.
+!  2. Remember to update the declarations in cflibfor.pyf if you add/remove
+!     in/out parameters to this exposed subroutine.
+
+implicit none
+real(kind=4)  :: wei(npt),wpp
+real(kind=8)  :: x(npt),y(npt),z(npt),dc(npt),rp2
+real(kind=8)  :: sepp(nsepp+1),sepv(nsepv+1),sepp2(nsepp+1),rpmax2,rvmax,rv,idsepv
+real(kind=8)  :: aapv(nsepv,nsepp)
+integer       :: npt,nsepp,nsepv
+integer       :: i,ii,j,jj
+
+!----------------------------------------------------
+! Reset the counts, set rvmax and square rp bins
+aapv   = 0.0d0
+rvmax  = sepv(nsepv+1)
+sepp2  = sepp*sepp
+rpmax2 = sepp2(nsepp+1)
+idsepv = 1./(sepv(2)-sepv(1))  !inverse radial bin size
+
+do i=1,npt
+   do j=i+1,npt
+    rv = abs(dc(i)-dc(j))
+    if(rv<=rvmax) then
+       rp2 = 4.*dc(i)*dc(j)*((x(i)-x(j))**2 + (y(i)-y(j))**2 + (z(i)-z(j))**2)
+       if(rp2<=rpmax2) then
+           jj = 1 + int(rv*idsepv)       !find rv bin number
+           wpp = wei(i)*wei(j)           !weight by input
+           if(rp2>sepp2(nsepp)) then
+              aapv(jj,nsepp) = aapv(jj,nsepp) + wpp
+              goto 70
+           endif
+           do ii=nsepp-1,1,-1
+              if(rp2>sepp2(ii)) then
+                 aapv(jj,ii) = aapv(jj,ii) + wpp
+                 goto 70
+              endif
+           enddo
+       endif
+    endif
+    70 continue
+   enddo
+end do
+end subroutine rppi_A_wg_naiveway
 
 subroutine rppi_Ab(nt,npt,dec,dc,x,y,z,nsepp,sepp,nsepv,sepv,sbound, &
            mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk,ll,aapv,baapv)
@@ -1311,6 +1446,76 @@ write(*,*) ' '
 end subroutine rppi_C
 
 
+subroutine rppi_C_naiveway(npt,dc,x,y,z,npt1,dc1,x1,y1,z1,nsepp,sepp,nsepv,sepv,cdpv)
+!===============================================================================
+! NAME
+!  rppi_C_naiveway()
+!
+! DESCRIPTION
+!  Cross-count data pairs in projected space for TWO samples of particles
+!
+! INPUTS
+!  Variable---Type-----------Description----------------------------------------
+!  npt        int            [sampleC] Number of particles
+!  dc         r8(npt)        [sampleC] DCOM of particles [Mpc/h]
+!  x,y,z      r8(npt)        [sampleC] X,Y,Z coordinates of particles (see radec2xyz())
+!  npt1       int            [sampleD] Number of particles
+!  dc1        r8(npt1)       [sampleD] DCOM of particles [Mpc/h]
+!  x1,y1,z1   r8(npt1)       [sampleD] X,Y,Z coordinates of particles (see radec2xyz())
+!  nsepp      int            Number of projected separation bins
+!  sepp       r8(nsepp+1)    Bins in projected separation [Mpc/h]
+!  nsepv      int            Number of radial separation bins
+!  sepv       r8(nsepv+1)    Bins in radial separation [Mpc/h]
+!
+! OUTPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  cdpv       r8(nsepv,nsepp)  Counts in radial and projected separation bins
+!
+! NOTES  -----------------------------------------------------------------------
+!  1. RA limits should be set to ramin=0 and ramax=360.
+!  2. Remember to update the declarations in cflibfor.pyf if you add/remove
+!     in/out parameters to this exposed subroutine.
+
+implicit none
+real(kind=8)  :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1),rp2
+real(kind=8)  :: dc(npt),dc1(npt1)
+real(kind=8)  :: sepp(nsepp+1),sepv(nsepv+1),sepp2(nsepp+1),rpmax2,rvmax,rv,idsepv
+real(kind=8)  :: cdpv(nsepv,nsepp)
+integer       :: npt,npt1,nsepp,nsepv
+integer       :: i,ii,j,jj
+
+!----------------------------------------------------
+! Reset the counts, set rvmax and square rp bins
+cdpv   = 0.d0
+rvmax  = sepv(nsepv+1)
+sepp2  = sepp*sepp
+rpmax2 = sepp2(nsepp+1)
+idsepv = 1./(sepv(2)-sepv(1))  !inverse radial bin size
+
+do i=1,npt
+   do j=1,npt1
+       rv = abs(dc(i)-dc1(j))
+       if(rv<=rvmax) then
+          rp2 = 4.*dc(i)*dc1(j)*((x(i)-x1(j))**2 + (y(i)-y1(j))**2 + (z(i)-z1(j))**2)
+          if(rp2<=rpmax2) then
+             jj = 1 + int(rv*idsepv)       !find rv bin number
+             if(rp2>sepp2(nsepp)) then
+                cdpv(jj,nsepp) = cdpv(jj,nsepp) + 1.0d0
+                goto 70
+             endif
+             do ii=nsepp-1,1,-1
+                if(rp2>sepp2(ii)) then
+                   cdpv(jj,ii) = cdpv(jj,ii) + 1.0d0
+                   goto 70
+                endif
+             enddo
+          endif
+       endif
+       70 continue
+    enddo
+enddo
+end subroutine rppi_C_naiveway
+
 subroutine rppi_C_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1, &
            nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk1,ll1,cdpv)
 !===============================================================================
@@ -1507,6 +1712,79 @@ close(11)  ! close log
 write(*,*) ' '
 end subroutine rppi_C_wg
 
+subroutine rppi_C_wg_naiveway(npt,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,nsepp,sepp,nsepv,sepv,cdpv)
+!===============================================================================
+! NAME
+!  rppi_C_wg_naiveway()
+!
+! DESCRIPTION
+!  Cross-count weighted data pairs in projected space for TWO samples of particles
+!
+! INPUTS
+!  Variable---Type-----------Description----------------------------------------
+!  npt        int            [sampleC] Number of particles
+!  dc         r8(npt)        [sampleC] DCOM of particles [Mpc/h]
+!  wei        r4(npt)        [sampleC] WEIGHT of particles
+!  x,y,z      r8(npt)        [sampleC] X,Y,Z coordinates of particles (see radec2xyz())
+!  npt1       int            [sampleD] Number of particles
+!  dc1        r8(npt1)       [sampleD] DCOM of particles [Mpc/h]
+!  wei1       r4(npt1)       [sampleD] WEIGHT of particles
+!  x1,y1,z1   r8(npt1)       [sampleD] X,Y,Z coordinates of particles (see radec2xyz())
+!  nsepp      int            Number of projected separation bins
+!  sepp       r8(nsepp+1)    Bins in projected separation [Mpc/h]
+!  nsepv      int            Number of radial separation bins
+!  sepv       r8(nsepv+1)    Bins in radial separation [Mpc/h]
+!
+! OUTPUTS
+!  Variable---Type-------------Description--------------------------------------
+!  cdpv       r8(nsepv,nsepp)  Counts in radial and projected separation bins
+!
+! NOTES  -----------------------------------------------------------------------
+!  1. RA limits should be set to ramin=0 and ramax=360.
+!  2. Remember to update the declarations in cflibfor.pyf if you add/remove
+!     in/out parameters to this exposed subroutine.
+
+implicit none
+real(kind=8)  :: x(npt),y(npt),z(npt),x1(npt1),y1(npt1),z1(npt1),rp2
+real(kind=8)  :: dc(npt),dc1(npt1)
+real(kind=4)  :: wei(npt),wei1(npt1),wpp
+real(kind=8)  :: sepp(nsepp+1),sepv(nsepv+1),sepp2(nsepp+1),rpmax2,rvmax,rv,idsepv
+real(kind=8)  :: cdpv(nsepv,nsepp)
+integer       :: npt,npt1,nsepp,nsepv
+integer       :: i,ii,j,jj
+
+!----------------------------------------------------
+! Reset the counts, set rvmax and square rp bins
+cdpv   = 0.d0
+rvmax  = sepv(nsepv+1)
+sepp2  = sepp*sepp
+rpmax2 = sepp2(nsepp+1)
+idsepv = 1./(sepv(2)-sepv(1))  !inverse radial bin size
+
+do i=1,npt
+   do j=1,npt1
+       rv = abs(dc(i)-dc1(j))
+       if(rv<=rvmax) then
+          rp2 = 4.*dc(i)*dc1(j)*((x(i)-x1(j))**2 + (y(i)-y1(j))**2 + (z(i)-z1(j))**2)
+          if(rp2<=rpmax2) then
+             jj = 1 + int(rv*idsepv)             !find rv bin number
+             wpp = wei(i)*wei1(j)                !weight by input
+             if(rp2>sepp2(nsepp)) then
+                cdpv(jj,nsepp) = cdpv(jj,nsepp) + wpp
+                goto 70
+             endif
+             do ii=nsepp-1,1,-1
+                if(rp2>sepp2(ii)) then
+                   cdpv(jj,ii) = cdpv(jj,ii) + wpp
+                   goto 70
+                endif
+             enddo
+          endif
+       endif
+       70 continue
+    enddo
+enddo
+end subroutine rppi_C_wg_naiveway
 
 subroutine rppi_Cb(nt,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,nsepp,sepp,nsepv,sepv, &
            sbound,mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk1,ll1,cdpv,bcdpv)

@@ -46,6 +46,15 @@ python module cflibfor ! in
                 real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapv
             end subroutine rppi_A
 
+            subroutine rppi_A_naiveway(npt,dc,x,y,z,nsepp,sepp,nsepv,sepv,aapv) ! in :cflibfor:cflibfor.f90:mod
+                integer :: npt
+                real(kind=8) dimension(npt),depend(npt) :: x,y,z,dc
+                integer :: nsepp,nsepv
+                real(kind=8) dimension(nsepp + 1),depend(nsepp) :: sepp
+                real(kind=8) dimension(nsepv + 1),depend(nsepv) :: sepv
+                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapv
+            end subroutine rppi_A_naiveway
+
             subroutine rppi_A_wg(nt,npt,dec,dc,wei,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk,ll,aapv) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,mxh1,mxh2,mxh3,wfib
                 real(kind=8) dimension(npt),depend(npt) :: dec,x,y,z,dc
@@ -60,6 +69,16 @@ python module cflibfor ! in
                 integer dimension(npt),depend(npt) :: ll
                 real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapv
             end subroutine rppi_A_wg
+
+            subroutine rppi_A_wg_naiveway(npt,dc,wei,x,y,z,nsepp,sepp,nsepv,sepv,aapv) ! in :cflibfor:cflibfor.f90:mod
+                integer :: npt
+                real(kind=8) dimension(npt),depend(npt) :: x,y,z,dc
+                real(kind=4) dimension(npt),depend(npt) :: wei
+                integer :: nsepp,nsepv
+                real(kind=8) dimension(nsepp + 1),depend(nsepp) :: sepp
+                real(kind=8) dimension(nsepv + 1),depend(nsepv) :: sepv
+                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: aapv
+            end subroutine rppi_A_wg_naiveway
 
             subroutine rppi_Ab(nt,npt,dec,dc,x,y,z,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk,ll,aapv,baapv) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,mxh1,mxh2,mxh3,nbts,bseed
@@ -107,6 +126,16 @@ python module cflibfor ! in
                 real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpv
             end subroutine rppi_C
 
+            subroutine rppi_C_naiveway(npt,dc,x,y,z,npt1,dc1,x1,y1,z1,nsepp,sepp,nsepv,sepv,cdpv) ! in :cflibfor:cflibfor.f90:mod
+                integer :: npt,npt1
+                real(kind=8) dimension(npt),depend(npt) :: x,y,z,dc
+                real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1,dc1
+                integer :: nsepp,nsepv
+                real(kind=8) dimension(nsepp + 1),depend(nsepp) :: sepp
+                real(kind=8) dimension(nsepv + 1),depend(nsepv) :: sepv
+                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpv
+            end subroutine rppi_C_naiveway
+
             subroutine rppi_C_wg(nt,npt,ra,dec,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,wfib,cntid,logf,sk1,ll1,cdpv) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,npt1,mxh1,mxh2,mxh3,wfib
                 real(kind=8) dimension(npt),depend(npt) :: ra,dec,x,y,z,dc
@@ -123,6 +152,18 @@ python module cflibfor ! in
                 integer dimension(npt1),depend(npt1) :: ll1
                 real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpv
             end subroutine rppi_C_wg
+
+            subroutine rppi_C_wg_naiveway(npt,dc,wei,x,y,z,npt1,dc1,wei1,x1,y1,z1,nsepp,sepp,nsepv,sepv,cdpv) ! in :cflibfor:cflibfor.f90:mod
+                integer :: npt,npt1
+                real(kind=8) dimension(npt),depend(npt) :: x,y,z,dc
+                real(kind=8) dimension(npt1),depend(npt1) :: x1,y1,z1,dc1
+                real(kind=4) dimension(npt),depend(npt) :: wei
+                real(kind=4) dimension(npt1),depend(npt1) :: wei1
+                integer :: nsepp,nsepv
+                real(kind=8) dimension(nsepp + 1),depend(nsepp) :: sepp
+                real(kind=8) dimension(nsepv + 1),depend(nsepv) :: sepv
+                real(kind=8) intent(out),dimension(nsepv,nsepp),depend(nsepv,nsepp) :: cdpv
+            end subroutine rppi_C_wg_naiveway
 
             subroutine rppi_Cb(nt,npt,ra,dec,dc,x,y,z,npt1,dc1,x1,y1,z1,nsepp,sepp,nsepv,sepv,sbound,mxh1,mxh2,mxh3,nbts,bseed,cntid,logf,sk1,ll1,cdpv,bcdpv) ! in :cflibfor:cflibfor.f90:mod
                 integer :: nt,npt,npt1,mxh1,mxh2,mxh3,nbts,bseed
