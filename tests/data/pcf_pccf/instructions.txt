@@ -1,0 +1,20 @@
+Input data and counts for testing auto and cross correlations (pcf and pccf), with weights
+==========================================================================================
+
+data sample (d)   > pcf_gals_weight.fits
+random sample (r) > pcf_rands_weight.fits
+cross sample (c)  > pcf_gals1_weight.fits
+
+pcf :
+dd counts --> dd_pcf_weight.npy
+rr counts --> rr_pcf_weight.npy
+
+pccf :
+cd counts --> cd_pccf_weight.npy
+cr counts --> cr_pccf_weight.npy
+
+
+Notes:
+* data and random samples are just DATA.fits and RAND.FITS from the original repo example, with random normal weights added
+* cross sample is a different sample of galaxies from SDSS, even with a different spatial coverage (i.e. cutted by different mask)
+
