@@ -16,9 +16,12 @@ from logging import INFO, FileHandler, StreamHandler, getLogger
 import gundam.cflibfor as cff
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 import numpy as np
 from astropy.table import Column, Table
 from munch import Munch
+from pathlib import PosixPath
+
 
 # ==============================================================================
 
@@ -311,7 +314,7 @@ def qprint(self):
         k = "par"
         if k in keys:
             print(k.ljust(lj) + ":: {")
-            txt = self.par.toJSON(indent=lj + 3, sort_keys=True)
+            txt = self.par.toJSON(indent=lj + 3, sort_keys=True, default=int)
             leng = txt.find("\n", 100)  # just print first few keys
             print(txt[2:leng], "\n" + spc * (lj + 3) + "...", "\n" + spc * (lj + 3) + "}")
 
@@ -861,12 +864,12 @@ def plotcf(
         if par.kind in ["acf", "accf", "thA", "thC"]:
             if angunit == "arcsec":
                 xtit = r"$\theta \ [\prime\prime]$" if xlabel == None else xlabel
+                x = x / 3600.0
             if angunit == "arcmin":
                 xtit = r"$\theta \ [\prime]$" if xlabel == None else xlabel
                 x = x / 60.0
             if angunit == "deg":
                 xtit = r"$\theta \ [^{\circ}]$" if xlabel == None else xlabel
-                x = x / 3600.0
             ytit = r"$w(\theta)$" if ylabel == None else ylabel
         if par.kind in ["rppiA", "rppiC", "thA", "thC", "sA", "sC"]:
             ytit = r"$counts$" if ylabel == None else ylabel
@@ -911,8 +914,13 @@ def plotcf(
     ax = plt.gca()
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.xaxis.set_major_formatter(killsciform)  # change labels from sci to plain
-    ax.yaxis.set_major_formatter(killsciform)
+    def custom_formatter(x, pos):
+        if x < 1:
+            return f'{x:.2f}'
+        else:
+            return f'{int(x)}'
+    ax.yaxis.set_major_formatter(FuncFormatter(custom_formatter))
+    ax.xaxis.set_major_formatter(FuncFormatter(custom_formatter))
 
     if write:
         if par != None:
@@ -1141,11 +1149,11 @@ def comparecf(
         kk = f.sca(ax1)  # set current axis to 1st axis
 
     # Find out the kind of correlation ---------------
-    kind = readcounts(clist1[0]).par.kind if type(clist1[0]) == str else clist1[0].par.kind
+    kind = readcounts(clist1[0]).par.kind if isinstance(clist1[0], (PosixPath, str)) else clist1[0].par.kind
 
     for i in range(n1):
         # Data comes from file or Munch object in variable
-        data = readcounts(clist1[i]) if type(clist1[i]) == str else clist1[i]
+        data = readcounts(clist1[i]) if isinstance(clist1[i], (PosixPath, str)) else clist1[i]
         if kind == "pcf":
             x = data.rpm
             y = data.wrp
@@ -1196,7 +1204,7 @@ def comparecf(
             if pos2in1 != [i]:
                 kk = f.sca(ax2)  # set current axis to 2nd axis
                 # Data comes from file or Munch object in variable
-                data2 = readcounts(clist2[0]) if type(clist2[0]) == str else clist2[0]
+                data2 = readcounts(clist2[0]) if isinstance(clist2[0], (PosixPath, str)) else clist2[0]
                 if kind == "pcf":
                     yc = data2.wrp
                 if kind == "xis":
@@ -1675,7 +1683,7 @@ def savepars(par, altname=None):
         par = gun.packpars(kind='acf', outfn='/proj/acfrun01')
         gun.savepars(par)
     """
-    pj = par.toJSON(indent=0)
+    pj = par.toJSON(indent=0, default=int)
     filename = altname if altname is not None else par.outfn + ".par"
 
     with open(filename, "w") as f:
@@ -4356,6 +4364,9 @@ def pcf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     par_rr = deepcopy(par)
     par_rr.kind = "rppiA"
     par_rr.cntid = "RR"
+    par_rr.cra = par.cra1
+    par_rr.cdec = par.cdec1
+    par_rr.cwei = par.cwei1
     par_rr.wfib = False  # don't do fiber corrections for RR pairs
     par_rr.doboot = False  # don't do bootstraping for RR pairs
     par_dr = deepcopy(par)
@@ -4620,9 +4631,15 @@ def pccf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
     par_cd = deepcopy(par)
     par_cd.kind = "rppiC"
     par_cd.cntid = "CD"
+    par_cd.cra = par.cra2
+    par_cd.cdec = par.cdec2
+    par_cd.cwei = par.cwei2
     par_cr = deepcopy(par)
     par_cr.kind = "rppiC"
     par_cr.cntid = "CR"
+    par_cr.cra = par.cra2
+    par_cr.cdec = par.cdec2
+    par_cr.cwei = par.cwei2
     par_cr.wfib = False  # don't do fiber corrections in crounts counts ?
     par_cr.doboot = False  # don't do bootstraping in cross counts ?
 
@@ -5966,6 +5983,11 @@ def acf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     """
     lj = 27  # nr of characters for left justification of some status msgs
 
+    # Control the input
+    valid_estimators = ["NAT", "HAM", "LS", "DP"]
+    if par.estimator not in valid_estimators:
+        raise ValueError("Estimator must be one of: 'NAT', 'HAM', 'LS', or 'DP'.")
+
     # Initialize logs, check if par has the right kind, etc. Common to all CF functions
     (par, log, logf, logff, runspyder, t0) = initialize("acf", par, nthreads=nthreads, write=write, plot=plot)
 
@@ -5999,6 +6021,9 @@ def acf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
     par_rr = deepcopy(par)
     par_rr.kind = "thA"
     par_rr.cntid = "RR"
+    par_rr.cra = par.cra1
+    par_rr.cdec = par.cdec1
+    par_rr.cwei = par.cwei1
     par_rr.wfib = False  # don't do fiber corrections in random counts
     par_rr.doboot = False  # don't do bootstraping in random counts
     par_dr = deepcopy(par)
@@ -6015,7 +6040,7 @@ def acf(tab, tab1, par, nthreads=-1, write=True, plot=False, **kwargs):
         par_rr.mxh1, par_rr.mxh2, tdens_rr = bestSKgrid2d(par_rr, npt1, tab1[cra1].data, dens=par.dens)
         log.info("SK cell target density".ljust(lj) + f" : {tdens_rr:0.3f}")
         # For crosscounts choose the grid of randoms. Change if passing Random-Data order instead
-        par_dr.mxh1, par_dr.mxh2, par_dr.mxh3 = par_rr.mxh1, par_rr.mxh2, par_rr.mxh3
+        par_dr.mxh1, par_dr.mxh2 = par_rr.mxh1, par_rr.mxh2
         # par_dr.mxh1, par_dr.mxh2, par_dr.mxh3 = par_dd.mxh1, par_dd.mxh2, par_dd.mxh3
     else:
         log.info("Autogrid OFF")
@@ -6184,6 +6209,11 @@ def accf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
     """
     lj = 27  # nr of characters for left justification of some status msgs
 
+    # Control the input
+    valid_estimators = ["NAT", "HAM", "LS", "DP"]
+    if par.estimator not in valid_estimators:
+        raise ValueError("Estimator must be one of: 'NAT', 'HAM', 'LS', or 'DP'.")
+
     # Initialize logs, check if par has the right kind, etc. Common to all CF functions
     (par, log, logf, logff, runspyder, t0) = initialize(
         "accf", par, nthreads=nthreads, write=write, plot=plot
@@ -6218,9 +6248,15 @@ def accf(tab, tab1, tab2, par, nthreads=-1, write=True, plot=False, **kwargs):
     par_cd = deepcopy(par)
     par_cd.kind = "thC"
     par_cd.cntid = "CD"
+    par_cd.cra = par.cra2
+    par_cd.cdec = par.cdec2
+    par_cd.cwei = par.cwei2
     par_cr = deepcopy(par)
     par_cr.kind = "thC"
     par_cr.cntid = "CR"
+    par_cr.cra = par.cra2
+    par_cr.cdec = par.cdec2
+    par_cr.cwei = par.cwei2
     par_cr.wfib = False  # don't do fiber corrections in crounts counts ?
     par_cr.doboot = False  # don't do bootstraping in cross counts ?
 
